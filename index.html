@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>VMD OS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D1B2A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VMD OS">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:   #0D1B2A;
+  --blue:   #1565C0;
+  --blue2:  #1976D2;
+  --cyan:   #00B0FF;
+  --green:  #00C853;
+  --green2: #2E7D32;
+  --orange: #FF6D00;
+  --red:    #D32F2F;
+  --purple: #6A1B9A;
+  --white:  #FFFFFF;
+  --bg:     #F0F4F8;
+  --card:   #FFFFFF;
+  --text:   #1A2332;
+  --text2:  #546E7A;
+  --border: #E0E7EF;
+  --shadow: 0 2px 8px rgba(13,27,42,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* ── LOGIN ─────────────────────────────────────────────── */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-card{background:var(--card);border-radius:16px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(13,27,42,.12);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .logo-text{font-size:28px;font-weight:800;color:var(--blue);letter-spacing:-1px;}
+.login-logo .logo-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.form-group input,.form-group select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border .2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue);}
+.btn-login{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:background .2s;}
+.btn-login:hover{background:var(--blue2);}
+.login-hint{font-size:11px;color:var(--text2);text-align:center;margin-top:16px;line-height:1.6;}
+
+/* ── APP SHELL ─────────────────────────────────────────── */
+#app-shell{display:none;min-height:100vh;flex-direction:column;}
+.topbar{background:var(--navy);color:#fff;padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar .logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.5px;}
+.topbar .role-badge{font-size:10px;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:20px;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.notif-btn{position:relative;background:none;border:none;color:#fff;cursor:pointer;padding:4px;font-size:20px;line-height:1;}
+.notif-count{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* ── NAV TABS ──────────────────────────────────────────── */
+.nav-tabs{background:var(--card);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.nav-tab{flex-shrink:0;padding:12px 16px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* ── MAIN CONTENT ──────────────────────────────────────── */
+.main{flex:1;padding:16px;max-width:900px;margin:0 auto;width:100%;}
+
+/* ── CARDS ─────────────────────────────────────────────── */
+.card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px;}
+.card-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.card-header .card-title{margin-bottom:0;}
+
+/* ── STAT GRID ─────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;}
+.stat-card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);text-align:center;}
+.stat-card .stat-val{font-size:26px;font-weight:800;line-height:1;margin-bottom:4px;}
+.stat-card .stat-label{font-size:11px;color:var(--text2);font-weight:500;}
+.stat-card .stat-delta{font-size:10px;margin-top:3px;font-weight:600;}
+.stat-card.blue .stat-val{color:var(--blue);}
+.stat-card.green .stat-val{color:var(--green2);}
+.stat-card.orange .stat-val{color:var(--orange);}
+.stat-card.red .stat-val{color:var(--red);}
+
+/* ── ALERTS ────────────────────────────────────────────── */
+.alert-list{display:flex;flex-direction:column;gap:8px;}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;}
+.alert-item.red{background:#FFEBEE;border-left:3px solid var(--red);}
+.alert-item.orange{background:#FFF3E0;border-left:3px solid var(--orange);}
+.alert-item.blue{background:#E3F2FD;border-left:3px solid var(--blue);}
+.alert-item.green{background:#E8F5E9;border-left:3px solid var(--green);}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-text{line-height:1.4;}
+.alert-text strong{display:block;margin-bottom:1px;}
+.alert-text span{color:var(--text2);font-size:12px;}
+
+/* ── LEAD LIST ─────────────────────────────────────────── */
+.lead-list{display:flex;flex-direction:column;gap:8px;}
+.lead-item{background:var(--card);border-radius:10px;padding:12px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s;}
+.lead-item:hover{transform:translateY(-1px);}
+.lead-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.lead-name{font-weight:700;font-size:14px;}
+.lead-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.lead-status.new{background:#E3F2FD;color:#1565C0;}
+.lead-status.work{background:#E0F7FA;color:#00838F;}
+.lead-status.testdrive{background:#E8F5E9;color:#2E7D32;}
+.lead-status.kp{background:#F3E5F5;color:#6A1B9A;}
+.lead-status.contract{background:#E8F5E9;color:#1B5E20;}
+.lead-status.refused{background:#FFEBEE;color:#B71C1C;}
+.lead-meta{display:flex;gap:12px;font-size:12px;color:var(--text2);flex-wrap:wrap;}
+.lead-score{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.score-bar-bg{flex:1;height:5px;background:#E0E7EF;border-radius:3px;}
+.score-bar-fill{height:5px;border-radius:3px;transition:width .4s;}
+.score-label{font-size:11px;font-weight:700;min-width:36px;text-align:right;}
+
+/* ── MANAGER TABLE ─────────────────────────────────────── */
+.manager-list{display:flex;flex-direction:column;gap:8px;}
+.manager-row{background:var(--card);border-radius:10px;padding:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;}
+.manager-rank{font-size:18px;font-weight:800;color:var(--text2);min-width:28px;text-align:center;}
+.manager-rank.gold{color:#F9A825;}
+.manager-rank.silver{color:#78909C;}
+.manager-rank.bronze{color:#8D6E63;}
+.manager-info{flex:1;}
+.manager-name{font-weight:700;font-size:14px;margin-bottom:2px;}
+.manager-stats{display:flex;gap:10px;font-size:11px;color:var(--text2);flex-wrap:wrap;}
+.manager-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.badge-legend{background:#FFF9C4;color:#F57F17;}
+.badge-pro{background:#E8F5E9;color:#2E7D32;}
+.badge-std{background:#E3F2FD;color:#1565C0;}
+.badge-grow{background:#FFF3E0;color:#E65100;}
+.badge-alert{background:#FFEBEE;color:#C62828;}
+.manager-score-num{font-size:18px;font-weight:800;color:var(--blue);}
+
+/* ── DEALER TABLE ──────────────────────────────────────── */
+.dealer-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dealer-card{background:var(--card);border-radius:10px;padding:12px;box-shadow:var(--shadow);}
+.dealer-card .dc-name{font-weight:700;font-size:13px;margin-bottom:6px;}
+.dealer-card .dc-city{font-size:11px;color:var(--text2);margin-bottom:8px;}
+.dc-score-circle{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.dc-score-num{font-size:22px;font-weight:800;}
+.dc-mini-stats{display:flex;gap:6px;flex-wrap:wrap;}
+.dc-stat{font-size:10px;background:var(--bg);padding:3px 7px;border-radius:20px;color:var(--text2);}
+
+/* ── SCORE RING ────────────────────────────────────────── */
+.score-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-ring .ring-val{position:absolute;font-size:13px;font-weight:800;color:var(--text);}
+
+/* ── NOTIFICATIONS PANEL ───────────────────────────────── */
+#notif-panel{display:none;position:fixed;top:56px;right:0;width:320px;max-height:calc(100vh - 56px);background:var(--card);box-shadow:-4px 0 20px rgba(0,0,0,.12);z-index:200;overflow-y:auto;padding:16px;}
+#notif-panel.open{display:block;}
+.notif-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.notif-header h3{font-size:14px;font-weight:700;}
+.notif-clear{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;}
+.notif-item{padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px;font-size:12px;line-height:1.5;border-left:3px solid var(--blue);}
+.notif-item.red{border-left-color:var(--red);}
+.notif-item.orange{border-left-color:var(--orange);}
+.notif-item.green{border-left-color:var(--green2);}
+.notif-item .notif-time{color:var(--text2);margin-top:3px;}
+
+/* ── CSV UPLOAD ────────────────────────────────────────── */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:#E3F2FD;}
+.upload-zone .upload-icon{font-size:32px;margin-bottom:8px;}
+.upload-zone p{font-size:13px;color:var(--text2);}
+.upload-zone .upload-hint{font-size:11px;color:var(--text2);margin-top:4px;}
+#file-input{display:none;}
+
+/* ── FUNNEL ────────────────────────────────────────────── */
+.funnel{display:flex;flex-direction:column;gap:4px;}
+.funnel-row{display:flex;align-items:center;gap:8px;}
+.funnel-label{font-size:11px;color:var(--text2);min-width:90px;text-align:right;}
+.funnel-bar-wrap{flex:1;height:22px;background:var(--bg);border-radius:4px;overflow:hidden;}
+.funnel-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:700;color:#fff;transition:width .5s;}
+.funnel-count{font-size:11px;font-weight:700;color:var(--text);min-width:36px;}
+
+/* ── SECTION HEADER ────────────────────────────────────── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.section-title{font-size:16px;font-weight:700;}
+.section-sub{font-size:12px;color:var(--text2);}
+.btn-sm{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-outline{background:none;border:1.5px solid var(--border);color:var(--text2);}
+
+/* ── TODAY TASKS ───────────────────────────────────────── */
+.task-list{display:flex;flex-direction:column;gap:6px;}
+.task-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:8px;}
+.task-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.task-check.done{background:var(--green2);border-color:var(--green2);color:#fff;font-size:10px;}
+.task-info{flex:1;}
+.task-client{font-weight:600;font-size:13px;}
+.task-action{font-size:11px;color:var(--text2);}
+.task-time{font-size:11px;font-weight:600;color:var(--blue);flex-shrink:0;}
+.task-urgent{color:var(--red);}
+
+/* ── MODAL ─────────────────────────────────────────────── */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px;}
+#modal-overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);}
+.modal-field{margin-bottom:12px;}
+.modal-field label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase;}
+.modal-field .val{font-size:14px;font-weight:600;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.score-big{text-align:center;margin:12px 0;}
+.score-big .num{font-size:48px;font-weight:800;}
+.score-big .lbl{font-size:12px;color:var(--text2);}
+
+/* ── PROGRESS BAR ──────────────────────────────────────── */
+.progress-wrap{margin-bottom:12px;}
+.progress-label{display:flex;justify-content:space-between;margin-bottom:4px;}
+.progress-label span{font-size:12px;color:var(--text2);}
+.progress-label strong{font-size:12px;font-weight:700;}
+.progress-bar{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;transition:width .4s;}
+
+/* ── RESPONSIVE ────────────────────────────────────────── */
+@media(min-width:600px){
+  .stat-grid{grid-template-columns:repeat(4,1fr);}
+  .dealer-grid{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:480px){
+  #notif-panel{width:100%;}
+  .dealer-grid{grid-template-columns:1fr;}
+}
+
+/* ── UTILS ─────────────────────────────────────────────── */
+.flex{display:flex;}.gap8{gap:8px;}.gap12{gap:12px;}.items-center{align-items:center;}
+.text-green{color:var(--green2);}.text-red{color:var(--red);}.text-orange{color:var(--orange);}
+.text-blue{color:var(--blue);}.text-gray{color:var(--text2);}
+.bold{font-weight:700;}.mt8{margin-top:8px;}.mb8{margin-bottom:8px;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-text">VMD OS</div>
+      <div class="logo-sub">AI-Операционная система автохолдинга</div>
+    </div>
+    <div class="form-group">
+      <label>Логин</label>
+      <input type="text" id="login-input" placeholder="Введите логин" value="manager1">
+    </div>
+    <div class="form-group">
+      <label>Пароль</label>
+      <input type="password" id="pass-input" placeholder="••••••" value="1234">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Войти</button>
+    <div class="login-hint">
+      <strong>Тест-аккаунты:</strong><br>
+      manager1 · rop1 · director1 · distr1 · owner1<br>
+      Пароль для всех: <strong>1234</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP SHELL ═══════════════════ -->
+<div id="app-shell" style="display:none;flex-direction:column;">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="logo">VMD OS</span>
+      <span class="role-badge" id="role-badge">—</span>
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn" onclick="toggleNotif()">
+        🔔
+        <span class="notif-count" id="notif-count">0</span>
+      </button>
+      <div class="avatar" id="user-avatar" onclick="doLogout()">?</div>
+    </div>
+  </div>
+  <div class="nav-tabs" id="nav-tabs"></div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<!-- ═══════════════════ NOTIFICATIONS PANEL ═══════════════════ -->
+<div id="notif-panel">
+  <div class="notif-header">
+    <h3>🔔 Уведомления</h3>
+    <button class="notif-clear" onclick="clearNotifs()">Очистить все</button>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- ═══════════════════ MODAL ═══════════════════ -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<input type="file" id="file-input" accept=".csv" onchange="handleCSV(event)">
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════════
+
+const USERS = {
+  manager1: { pass:'1234', name:'Алибек Джаксыбеков', role:'manager', dealer:'Kaiyi Almaty',    city:'Алматы' },
+  manager2: { pass:'1234', name:'Гүлнар Əбенова',      role:'manager', dealer:'Kaiyi Astana',    city:'Астана' },
+  rop1:     { pass:'1234', name:'Серік Мұратов',        role:'rop',     dealer:'Kaiyi Almaty',    city:'Алматы' },
+  director1:{ pass:'1234', name:'Болат Ахметов',        role:'director',dealer:'Kaiyi Almaty',    city:'Алматы' },
+  distr1:   { pass:'1234', name:'Мухаммед Сейткали',    role:'distr',   dealer:'Дистрибьютор',    city:'Алматы' },
+  owner1:   { pass:'1234', name:'Виктор Петренко',      role:'owner',   dealer:'Учредитель',      city:'Алматы' },
+};
+
+const ROLE_LABELS = {
+  manager:'Менеджер', rop:'РОП', director:'Директор ДЦ', distr:'Дистрибьютор', owner:'Учредитель'
+};
+
+const STATUS_MAP = {
+  'Новый':'new','В работе':'work',
+  'Тест-драйв':'testdrive','КП':'kp','Контракт':'contract','Отказ':'refused'
+};
+
+// Demo leads data (matches real DNM statistics)
+const DEMO_LEADS = [
+  // Kaiyi Almaty – manager: Алибек
+  {id:'RL-001',date:'2026-04-24',client:'Нурлан Сейткали',phone:'+7 701 234 5678',manager:'Алибек Джаксыбеков',dealer:'Kaiyi Almaty',status:'Тест-драйв',model:'Kaiyi X3',modification:'Premium 1.5T',color:'Белый',opd:true,testDrive:'2026-04-26',kp:null,source:'Колёса.kz',nextAction:'Звонок',nextActionDate:'2026-04-27',lastContact:'2026-04-24'},
+  {id:'RL-002',date:'2026-04-23',client:'Айгерим Қасымова',phone:'+7 702 345 6789',manager:'Алибек Джаксыбеков',dealer:'Kaiyi Almaty',status:'КП',model:'Kaiyi X3 Pro',modification:'Elite 1.6T',color:'Чёрный',opd:true,testDrive:'2026-04-21',kp:'2026-04-23',source:'Сайт',nextAction:'Встреча',nextActionDate:'2026-04-28',lastContact:'2026-04-23'},
+  {id:'RL-003',date:'2026-04-22',client:'Дамир Əлиев',phone:'+7 703 456 7890',manager:'Алибек Джаксыбеков',dealer:'Kaiyi Almaty',status:'В работе',model:'Kaiyi E5',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Instagram',nextAction:'Звонок',nextActionDate:'2026-04-25',lastContact:'2026-04-22'},
+  {id:'RL-004',date:'2026-04-21',client:'Зарина Мусина',phone:'+7 704 567 8901',manager:'Алибек Джаксыбеков',dealer:'Kaiyi Almaty',status:'Новый',model:'Kaiyi X3',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Звонок',nextAction:'Звонок',nextActionDate:'2026-04-26',lastContact:null},
+  {id:'RL-005',date:'2026-04-20',client:'Тимур Оразов',phone:'+7 705 678 9012',manager:'Алибек Джаксыбеков',dealer:'Kaiyi Almaty',status:'Контракт',model:'Kaiyi X3 Pro',modification:'Premium 1.6T',color:'Серый',opd:true,testDrive:'2026-04-17',kp:'2026-04-19',source:'Рекомендация',nextAction:null,nextActionDate:null,lastContact:'2026-04-20'},
+  {id:'RL-006',date:'2026-04-20',client:'Асель Ибрагимова',phone:'+7 706 789 0123',manager:'Алибек Джаксыбеков',dealer:'Kaiyi Almaty',status:'Отказ',model:'Kaiyi X3',modification:'Standard',color:'Белый',opd:true,testDrive:'2026-04-18',kp:null,source:'Колёса.kz',nextAction:null,nextActionDate:null,lastContact:'2026-04-20'},
+
+  // Kaiyi Almaty – manager: Санжар
+  {id:'RL-007',date:'2026-04-24',client:'Руслан Баймагамбетов',phone:'+7 707 890 1234',manager:'Санжар Тоқтаров',dealer:'Kaiyi Almaty',status:'В работе',model:'Kaiyi E5',modification:'Luxury',color:'Синий',opd:true,testDrive:null,kp:null,source:'Instagram',nextAction:'Звонок',nextActionDate:'2026-04-27',lastContact:'2026-04-24'},
+  {id:'RL-008',date:'2026-04-23',client:'Мадина Əлімова',phone:'+7 708 901 2345',manager:'Санжар Тоқтаров',dealer:'Kaiyi Almaty',status:'В работе',model:'Kaiyi X3',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Сайт',nextAction:'Звонок',nextActionDate:'2026-04-24',lastContact:'2026-04-22'},
+  {id:'RL-009',date:'2026-04-22',client:'Ерлан Жумабеков',phone:'+7 709 012 3456',manager:'Санжар Тоқтаров',dealer:'Kaiyi Almaty',status:'Тест-драйв',model:'Kaiyi X3 Pro',modification:'Elite',color:'Белый',opd:true,testDrive:'2026-04-25',kp:null,source:'Звонок',nextAction:'КП',nextActionDate:'2026-04-26',lastContact:'2026-04-23'},
+  {id:'RL-010',date:'2026-04-19',client:'Камила Нурова',phone:null,manager:'Санжар Тоқтаров',dealer:'Kaiyi Almaty',status:'Новый',model:'Kaiyi E5',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Instagram',nextAction:'Звонок',nextActionDate:'2026-04-20',lastContact:null},
+
+  // Kaiyi Almaty – manager: Динара
+  {id:'RL-011',date:'2026-04-24',client:'Арман Сəрсенов',phone:'+7 711 123 4567',manager:'Динара Хасанова',dealer:'Kaiyi Almaty',status:'В работе',model:'Kaiyi X3',modification:'Standard',color:null,opd:true,testDrive:null,kp:null,source:'Колёса.kz',nextAction:'Встреча',nextActionDate:'2026-04-28',lastContact:'2026-04-24'},
+  {id:'RL-012',date:'2026-04-23',client:'Айдана Бекова',phone:'+7 712 234 5678',manager:'Динара Хасанова',dealer:'Kaiyi Almaty',status:'КП',model:'Kaiyi X3 Pro',modification:'Premium',color:'Чёрный',opd:true,testDrive:'2026-04-20',kp:'2026-04-22',source:'Рекомендация',nextAction:'Контракт',nextActionDate:'2026-04-27',lastContact:'2026-04-23'},
+
+  // Kaiyi Astana
+  {id:'RL-013',date:'2026-04-24',client:'Бауыржан Тəуекел',phone:'+7 717 345 6789',manager:'Гүлнар Əбенова',dealer:'Kaiyi Astana',status:'Новый',model:'Kaiyi X3',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Сайт',nextAction:'Звонок',nextActionDate:'2026-04-26',lastContact:null},
+  {id:'RL-014',date:'2026-04-23',client:'Алия Сейткалиева',phone:'+7 718 456 7890',manager:'Гүлнар Əбенова',dealer:'Kaiyi Astana',status:'Тест-драйв',model:'Kaiyi E5',modification:'Luxury',color:'Белый',opd:true,testDrive:'2026-04-25',kp:null,source:'Instagram',nextAction:'КП',nextActionDate:'2026-04-27',lastContact:'2026-04-24'},
+  {id:'RL-015',date:'2026-04-22',client:'Серік Оспанов',phone:'+7 719 567 8901',manager:'Арман Байсеитов',dealer:'Kaiyi Astana',status:'В работе',model:'Kaiyi X3 Pro',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Звонок',nextAction:'Звонок',nextActionDate:'2026-04-23',lastContact:'2026-04-22'},
+
+  // Kaiyi Karaganda
+  {id:'RL-016',date:'2026-04-24',client:'Жанар Мусаева',phone:'+7 721 678 9012',manager:'Қанат Əбдіраімов',dealer:'Kaiyi Karaganda',status:'Контракт',model:'Kaiyi X3',modification:'Premium 1.5T',color:'Серый',opd:true,testDrive:'2026-04-18',kp:'2026-04-22',source:'Рекомендация',nextAction:null,nextActionDate:null,lastContact:'2026-04-24'},
+  {id:'RL-017',date:'2026-04-23',client:'Нұрсұлтан Қалиев',phone:'+7 722 789 0123',manager:'Қанат Əбдіраімов',dealer:'Kaiyi Karaganda',status:'В работе',model:'Kaiyi E5',modification:'Standard',color:'Синий',opd:true,testDrive:null,kp:null,source:'Колёса.kz',nextAction:'Звонок',nextActionDate:'2026-04-27',lastContact:'2026-04-23'},
+  {id:'RL-018',date:'2026-04-22',client:'Ботакоз Жексенова',phone:'+7 723 890 1234',manager:'Лаура Əбенқызы',dealer:'Kaiyi Karaganda',status:'Тест-драйв',model:'Kaiyi X3 Pro',modification:'Elite',color:'Белый',opd:true,testDrive:'2026-04-26',kp:null,source:'Instagram',nextAction:'КП',nextActionDate:'2026-04-28',lastContact:'2026-04-24'},
+
+  // Kaiyi Shymkent
+  {id:'RL-019',date:'2026-04-24',client:'Мираш Ерғали',phone:'+7 725 901 2345',manager:'Ақерке Сəдуақасова',dealer:'Kaiyi Shymkent',status:'Новый',model:'Kaiyi X3',modification:null,color:null,opd:false,testDrive:null,kp:null,source:'Instagram',nextAction:'Звонок',nextActionDate:'2026-04-26',lastContact:null},
+  {id:'RL-020',date:'2026-04-23',client:'Думан Рахимов',phone:'+7 726 012 3456',manager:'Ақерке Сəдуақасова',dealer:'Kaiyi Shymkent',status:'КП',model:'Kaiyi E5',modification:'Luxury',color:'Чёрный',opd:true,testDrive:'2026-04-19',kp:'2026-04-22',source:'Сайт',nextAction:'Встреча',nextActionDate:'2026-04-27',lastContact:'2026-04-23'},
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let state = {
+  user: null,
+  leads: [...DEMO_LEADS],
+  notifications: [],
+  currentTab: 0,
+  chartInstances: {},
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  SCORING
+// ═══════════════════════════════════════════════════════════════
+function scoreRl(rl) {
+  let s = 0;
+  if (rl.phone)        s += 30;
+  if (rl.modification) s += 20;
+  if (rl.opd)          s += 15;
+  if (rl.color)        s += 10;
+  if (rl.testDrive)    s += 10;
+  if (rl.kp)           s += 10;
+  if (rl.source)       s += 5;
+  return s;
+}
+
+function scoreColor(s) {
+  if (s >= 80) return '#00C853';
+  if (s >= 50) return '#FF6D00';
+  return '#D32F2F';
+}
+
+function managerBadge(score) {
+  if (score >= 90) return {label:'🏆 Легенда', cls:'badge-legend'};
+  if (score >= 75) return {label:'⭐ Профи',   cls:'badge-pro'};
+  if (score >= 60) return {label:'✅ Стандарт',cls:'badge-std'};
+  if (score >= 45) return {label:'📈 Рост',    cls:'badge-grow'};
+  return {label:'⚠️ Алерт', cls:'badge-alert'};
+}
+
+function isOverdue(rl) {
+  if (!rl.nextActionDate) return false;
+  return new Date(rl.nextActionDate) < new Date();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════════════
+function doLogin() {
+  const login = document.getElementById('login-input').value.trim();
+  const pass  = document.getElementById('pass-input').value.trim();
+  const u = USERS[login];
+  if (!u || u.pass !== pass) { alert('Неверный логин или пароль'); return; }
+  state.user = { ...u, login };
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  document.getElementById('role-badge').textContent = ROLE_LABELS[u.role];
+  document.getElementById('user-avatar').textContent = u.name[0];
+  buildNotifications();
+  renderApp();
+}
+
+function doLogout() {
+  if (!confirm('Выйти из системы?')) return;
+  state.user = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+function buildNotifications() {
+  const role = state.user.role;
+  const notifs = [];
+  const myLeads = state.leads.filter(l => l.manager === state.user.name);
+
+  if (role === 'manager') {
+    myLeads.filter(l => isOverdue(l) && l.status !== 'Контракт' && l.status !== 'Отказ').forEach(l => {
+      notifs.push({type:'red', text:`⏰ Просрочено: <strong>${l.client}</strong> — ${l.nextAction}`, time:'Сейчас'});
+    });
+    myLeads.filter(l => !l.opd && l.status !== 'Отказ').forEach(l => {
+      notifs.push({type:'orange', text:`📋 Нет ОПД: <strong>${l.client}</strong> — получи согласие`, time:'Сегодня'});
+    });
+    myLeads.filter(l => !l.modification && l.status !== 'Отказ').forEach(l => {
+      notifs.push({type:'orange', text:`🔧 Не заполнена модификация: <strong>${l.client}</strong>`, time:'Сегодня'});
+    });
+  } else if (role === 'rop') {
+    const myDealerLeads = state.leads.filter(l => l.dealer === state.user.dealer);
+    const stuck = myDealerLeads.filter(l => l.status === 'В работе' && l.lastContact && (new Date() - new Date(l.lastContact)) > 2*24*3600*1000);
+    if (stuck.length) notifs.push({type:'red', text:`🔴 ${stuck.length} лидов без активности более 2 дней`, time:'Сегодня'});
+    const noContact = myDealerLeads.filter(l => !l.lastContact && l.status === 'Новый');
+    if (noContact.length) notifs.push({type:'orange', text:`📞 ${noContact.length} новых лидов без первого контакта`, time:'Сегодня'});
+    notifs.push({type:'blue', text:`📊 Ежедневный отчёт команды готов — конверсия 1.2%`, time:'18:00'});
+  } else if (role === 'director') {
+    const dcLeads = state.leads.filter(l => l.dealer === state.user.dealer);
+    const noOpd = dcLeads.filter(l => !l.opd && l.status !== 'Отказ');
+    if (noOpd.length) notifs.push({type:'red', text:`⚠️ Юридический риск: ${noOpd.length} лидов без ОПД в "${state.user.dealer}"`, time:'Сегодня'});
+    notifs.push({type:'blue', text:`📈 Ежедневный отчёт ДЦ готов — скоринг РЛ: 58%`, time:'18:00'});
+    notifs.push({type:'green', text:`🏆 Ваш ДЦ в рейтинге сети: 3 место из 12`, time:'Вчера'});
+  } else if (role === 'distr' || role === 'owner') {
+    notifs.push({type:'red', text:`🔴 Kaiyi Shymkent — скоринг упал до 34% (−15% за неделю)`, time:'Сейчас'});
+    notifs.push({type:'orange', text:`📊 Kaiyi Astana — 8 лидов без контакта более 24 часов`, time:'Сегодня'});
+    notifs.push({type:'green', text:`🏆 Лучший дилер недели: Kaiyi Karaganda (скоринг 82%)`, time:'Сегодня'});
+    notifs.push({type:'blue', text:`📈 Еженедельный отчёт по сети готов`, time:'Пн 09:00'});
+  }
+
+  state.notifications = notifs;
+  document.getElementById('notif-count').textContent = notifs.length;
+}
+
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+  const list = document.getElementById('notif-list');
+  list.innerHTML = state.notifications.length
+    ? state.notifications.map(n => `<div class="notif-item ${n.type}"><div>${n.text}</div><div class="notif-time">${n.time}</div></div>`).join('')
+    : '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px;">Нет новых уведомлений</div>';
+}
+
+function clearNotifs() {
+  state.notifications = [];
+  document.getElementById('notif-count').textContent = '0';
+  document.getElementById('notif-list').innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px;">Нет новых уведомлений</div>';
+}
+
+// close notif on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.querySelector('.notif-btn');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER ROUTER
+// ═══════════════════════════════════════════════════════════════
+const ROLE_TABS = {
+  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📊 Мой скоринг', view:'managerScore'}],
+  rop:      [{label:'🏠 Главная', view:'ropHome'}, {label:'👥 Менеджеры', view:'ropManagers'}, {label:'📋 Все лиды', view:'ropLeads'}],
+  director: [{label:'🏠 ДЦ Обзор', view:'dirHome'}, {label:'👥 Команда', view:'dirTeam'}, {label:'📊 Отчёт', view:'dirReport'}, {label:'📂 CSV', view:'csvUpload'}],
+  distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📂 CSV', view:'csvUpload'}],
+  owner:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📂 CSV', view:'csvUpload'}],
+};
+
+function renderApp() {
+  const role = state.user.role;
+  const tabs = ROLE_TABS[role];
+  const navEl = document.getElementById('nav-tabs');
+  navEl.innerHTML = tabs.map((t,i) =>
+    `<div class="nav-tab ${i===state.currentTab?'active':''}" onclick="switchTab(${i})">${t.label}</div>`
+  ).join('');
+  destroyCharts();
+  const view = tabs[state.currentTab].view;
+  const el = document.getElementById('main-content');
+  el.innerHTML = '';
+  const builders = {
+    managerHome, managerLeads, managerScore,
+    ropHome, ropManagers, ropLeads,
+    dirHome, dirTeam, dirReport,
+    networkHome, networkDealers, networkAnalytics,
+    csvUpload,
+  };
+  if (builders[view]) el.innerHTML = builders[view]();
+  else el.innerHTML = '<div class="card">Раздел в разработке</div>';
+  setTimeout(initCharts, 100);
+}
+
+function switchTab(i) {
+  state.currentTab = i;
+  renderApp();
+}
+
+function destroyCharts() {
+  Object.values(state.chartInstances).forEach(c => { try { c.destroy(); } catch(e){} });
+  state.chartInstances = {};
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function funnelData(leads) {
+  const statuses = ['Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
+  return statuses.map(s => ({ status: s, count: leads.filter(l => l.status === s).length }));
+}
+
+function avgScore(leads) {
+  if (!leads.length) return 0;
+  return Math.round(leads.reduce((a,l) => a + scoreRl(l), 0) / leads.length);
+}
+
+function managerStats(managerName, leads) {
+  const ml = leads.filter(l => l.manager === managerName);
+  const contracts = ml.filter(l => l.status === 'Контракт').length;
+  const td = ml.filter(l => l.testDrive).length;
+  const kp = ml.filter(l => l.kp).length;
+  const score = avgScore(ml);
+  const conv = ml.length ? ((contracts/ml.length)*100).toFixed(1) : '0.0';
+  const contact = ml.filter(l => l.lastContact).length;
+  // composite manager score
+  const ms = Math.min(100, Math.round(
+    (contracts/Math.max(ml.length,1)*100)*0.35 +
+    score*0.20 +
+    (contact/Math.max(ml.length,1)*100)*0.15 +
+    ((td+kp)/Math.max(ml.length*2,1)*100)*0.15 +
+    Math.min(100, score)*0.10 +
+    (ml.filter(l=>l.opd).length/Math.max(ml.length,1)*100)*0.05
+  ));
+  return { name:managerName, leads:ml.length, contracts, td, kp, score, conv, ms };
+}
+
+function dealerStats(dealerName, leads) {
+  const dl = leads.filter(l => l.dealer === dealerName);
+  const contracts = dl.filter(l => l.status === 'Контракт').length;
+  const stuck = dl.filter(l => l.status === 'В работе').length;
+  const score = avgScore(dl);
+  const conv = dl.length ? ((contracts/dl.length)*100).toFixed(1) : '0.0';
+  const managers = [...new Set(dl.map(l => l.manager))];
+  return { name:dealerName, leads:dl.length, contracts, stuck, score, conv, managers: managers.length };
+}
+
+function colorFor(s) { return scoreColor(s); }
+
+function scoreBar(score, showLabel=true) {
+  const c = colorFor(score);
+  return `<div class="lead-score">
+    <div class="score-bar-bg"><div class="score-bar-fill" style="width:${score}%;background:${c}"></div></div>
+    ${showLabel ? `<span class="score-label" style="color:${c}">${score}%</span>` : ''}
+  </div>`;
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function statusBadge(s) {
+  const cls = STATUS_MAP[s] || 'work';
+  return `<span class="lead-status ${cls}">${s}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MANAGER VIEWS
+// ═══════════════════════════════════════════════════════════════
+function managerHome() {
+  const u = state.user;
+  const myLeads = state.leads.filter(l => l.manager === u.name);
+  const active = myLeads.filter(l => l.status !== 'Контракт' && l.status !== 'Отказ');
+  const contracts = myLeads.filter(l => l.status === 'Контракт').length;
+  const overdue = active.filter(l => isOverdue(l));
+  const noOpd = active.filter(l => !l.opd);
+  const score = avgScore(myLeads);
+  const sc = scoreColor(score);
+
+  const tasks = active.filter(l => l.nextActionDate).sort((a,b) => a.nextActionDate.localeCompare(b.nextActionDate)).slice(0,5);
+
+  return `
+  <div class="section-header">
+    <div><div class="section-title">Привет, ${u.name.split(' ')[0]}! 👋</div><div class="section-sub">${u.dealer} · Сегодня ${new Date().toLocaleDateString('ru',{day:'numeric',month:'long'})}</div></div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-val">${active.length}</div><div class="stat-label">Активных лидов</div></div>
+    <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
+    <div class="stat-card orange"><div class="stat-val">${overdue.length}</div><div class="stat-label">Просрочено</div></div>
+    <div class="stat-card ${score>=70?'green':score>=50?'orange':'red'}"><div class="stat-val">${score}%</div><div class="stat-label">Скоринг РЛ</div></div>
+  </div>
+
+  ${overdue.length || noOpd.length ? `
+  <div class="card">
+    <div class="card-title">⚠️ Требуют внимания</div>
+    <div class="alert-list">
+      ${overdue.map(l=>`<div class="alert-item red"><div class="alert-icon">🔴</div><div class="alert-text"><strong>${l.client}</strong><span>Просрочено: ${l.nextAction} · ${l.nextActionDate}</span></div></div>`).join('')}
+      ${noOpd.map(l=>`<div class="alert-item orange"><div class="alert-icon">📋</div><div class="alert-text"><strong>${l.client}</strong><span>Нет согласия ОПД — юридический риск</span></div></div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <div class="card">
+    <div class="card-title">📅 Задачи на сегодня</div>
+    <div class="task-list">
+      ${tasks.length ? tasks.map((l,i) => `
+      <div class="task-item">
+        <div class="task-check ${l.status==='Контракт'?'done':''}" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''" id="tc${i}">
+          ${l.status==='Контракт'?'✓':''}
+        </div>
+        <div class="task-info">
+          <div class="task-client">${l.client}</div>
+          <div class="task-action">${l.nextAction||'—'} · ${statusBadge(l.status)}</div>
+        </div>
+        <div class="task-time ${isOverdue(l)?'task-urgent':''}">${l.nextActionDate||'—'}</div>
+      </div>`).join('') : '<div class="text-gray" style="text-align:center;padding:16px;">Нет задач на сегодня 🎉</div>'}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Моя воронка</div>
+    <div class="funnel" id="my-funnel"></div>
+  </div>`;
+}
+
+function managerLeads() {
+  const u = state.user;
+  const myLeads = state.leads.filter(l => l.manager === u.name);
+  return `
+  <div class="section-header">
+    <div class="section-title">Мои лиды (${myLeads.length})</div>
+  </div>
+  <div class="lead-list">
+    ${myLeads.map(l => {
+      const s = scoreRl(l);
+      return `<div class="lead-item" onclick="showLead('${l.id}')">
+        <div class="lead-header">
+          <span class="lead-name">${l.client}</span>
+          ${statusBadge(l.status)}
+        </div>
+        <div class="lead-meta">
+          <span>📱 ${l.phone||'—'}</span>
+          <span>🚗 ${l.model||'—'}</span>
+          <span>📅 ${l.date}</span>
+        </div>
+        ${scoreBar(s)}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function managerScore() {
+  const u = state.user;
+  const myLeads = state.leads.filter(l => l.manager === u.name && l.status !== 'Отказ');
+  const score = avgScore(myLeads);
+  const fields = [
+    {label:'📱 Телефон',         weight:30, filled:myLeads.filter(l=>l.phone).length,        total:myLeads.length},
+    {label:'🔧 Модификация',     weight:20, filled:myLeads.filter(l=>l.modification).length,  total:myLeads.length},
+    {label:'📋 Согласие ОПД',    weight:15, filled:myLeads.filter(l=>l.opd).length,           total:myLeads.length},
+    {label:'🎨 Цвет',            weight:10, filled:myLeads.filter(l=>l.color).length,         total:myLeads.length},
+    {label:'🚗 Тест-драйв',      weight:10, filled:myLeads.filter(l=>l.testDrive).length,     total:myLeads.length},
+    {label:'📄 КП отправлено',   weight:10, filled:myLeads.filter(l=>l.kp).length,            total:myLeads.length},
+    {label:'📣 Источник лида',   weight:5,  filled:myLeads.filter(l=>l.source).length,        total:myLeads.length},
+  ];
+  return `
+  <div class="card" style="text-align:center;">
+    <div class="card-title">Мой средний скоринг РЛ</div>
+    <div class="score-big"><div class="num" style="color:${scoreColor(score)}">${score}%</div><div class="lbl">${myLeads.length} рабочих листов</div></div>
+    <div style="font-size:12px;color:var(--text2);">Цель: ≥ 70% · Эталон (Karaganda): 82%</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Заполненность полей</div>
+    ${fields.map(f => {
+      const pct = f.total ? Math.round((f.filled/f.total)*100) : 0;
+      return `<div class="progress-wrap">
+        <div class="progress-label"><span>${f.label} <span class="text-gray">(вес ${f.weight}%)</span></span><strong>${f.filled}/${f.total} · ${pct}%</strong></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${scoreColor(pct)}"></div></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ROP VIEWS
+// ═══════════════════════════════════════════════════════════════
+function ropHome() {
+  const u = state.user;
+  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  const managers = [...new Set(dcLeads.map(l => l.manager))];
+  const stuck = dcLeads.filter(l => l.status === 'В работе').length;
+  const noContact = dcLeads.filter(l => !l.lastContact && l.status === 'Новый').length;
+  const contracts = dcLeads.filter(l => l.status === 'Контракт').length;
+  const conv = dcLeads.length ? ((contracts/dcLeads.length)*100).toFixed(1) : '0.0';
+
+  return `
+  <div class="section-header">
+    <div><div class="section-title">РОП · ${u.dealer}</div><div class="section-sub">${managers.length} менеджеров · ${dcLeads.length} лидов</div></div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-val">${dcLeads.length}</div><div class="stat-label">Всего лидов</div></div>
+    <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
+    <div class="stat-card orange"><div class="stat-val">${stuck}</div><div class="stat-label">Зависших</div></div>
+    <div class="stat-card ${parseFloat(conv)>=2?'green':parseFloat(conv)>=1?'orange':'red'}"><div class="stat-val">${conv}%</div><div class="stat-label">Конверсия</div></div>
+  </div>
+  ${noContact ? `<div class="card"><div class="alert-list"><div class="alert-item red"><div class="alert-icon">📞</div><div class="alert-text"><strong>${noContact} новых лидов без первого контакта</strong><span>Нужно срочно назначить менеджера</span></div></div></div></div>` : ''}
+  <div class="card">
+    <div class="card-title">📊 Воронка команды</div>
+    <div class="funnel" id="rop-funnel"></div>
+  </div>`;
+}
+
+function ropManagers() {
+  const u = state.user;
+  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  const managers = [...new Set(dcLeads.map(l => l.manager))].map(m => managerStats(m, dcLeads));
+  managers.sort((a,b) => b.ms - a.ms);
+
+  return `
+  <div class="section-header"><div class="section-title">Рейтинг менеджеров</div></div>
+  <div class="manager-list">
+    ${managers.map((m,i) => {
+      const badge = managerBadge(m.ms);
+      const rankCls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      return `<div class="manager-row">
+        <div class="manager-rank ${rankCls}">${i+1}</div>
+        <div class="manager-info">
+          <div class="manager-name">${m.name}</div>
+          <div class="manager-stats">
+            <span>📋 ${m.leads} лидов</span>
+            <span>✅ ${m.contracts} контракт.</span>
+            <span>🚗 ${m.td} ТД</span>
+            <span>📄 ${m.kp} КП</span>
+            <span>📊 РЛ: ${m.score}%</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <div class="manager-score-num">${m.ms}</div>
+          <span class="manager-badge ${badge.cls}">${badge.label}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function ropLeads() {
+  const u = state.user;
+  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  return `
+  <div class="section-header"><div class="section-title">Все лиды ${u.dealer} (${dcLeads.length})</div></div>
+  <div class="lead-list">
+    ${dcLeads.map(l => {
+      const s = scoreRl(l);
+      return `<div class="lead-item" onclick="showLead('${l.id}')">
+        <div class="lead-header"><span class="lead-name">${l.client}</span>${statusBadge(l.status)}</div>
+        <div class="lead-meta"><span>👤 ${l.manager}</span><span>🚗 ${l.model||'—'}</span><span>📅 ${l.date}</span></div>
+        ${scoreBar(s)}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DIRECTOR VIEWS
+// ═══════════════════════════════════════════════════════════════
+function dirHome() {
+  const u = state.user;
+  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  const managers = [...new Set(dcLeads.map(l => l.manager))].map(m => managerStats(m, dcLeads));
+  managers.sort((a,b) => b.ms - a.ms);
+  const contracts = dcLeads.filter(l => l.status === 'Контракт').length;
+  const stuck = dcLeads.filter(l => l.status === 'В работе').length;
+  const avgSc = avgScore(dcLeads);
+  const conv = dcLeads.length ? ((contracts/dcLeads.length)*100).toFixed(1) : '0.0';
+
+  return `
+  <div class="section-header">
+    <div><div class="section-title">${u.dealer}</div><div class="section-sub">Директор · ${new Date().toLocaleDateString('ru',{day:'numeric',month:'long'})}</div></div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-val">${dcLeads.length}</div><div class="stat-label">Лидов всего</div></div>
+    <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
+    <div class="stat-card orange"><div class="stat-val">${stuck}</div><div class="stat-label">Яма "Коммент."</div></div>
+    <div class="stat-card ${avgSc>=70?'green':avgSc>=50?'orange':'red'}"><div class="stat-val">${avgSc}%</div><div class="stat-label">Скоринг РЛ</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Воронка ДЦ</div>
+    <div class="funnel" id="dir-funnel"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">👥 Топ менеджеры</div></div>
+    <div class="manager-list">
+      ${managers.slice(0,3).map((m,i) => {
+        const badge = managerBadge(m.ms);
+        const rankCls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+        return `<div class="manager-row">
+          <div class="manager-rank ${rankCls}">${i+1}</div>
+          <div class="manager-info">
+            <div class="manager-name">${m.name}</div>
+            <div class="manager-stats"><span>📋 ${m.leads}</span><span>✅ ${m.contracts}</span><span>📊 ${m.score}%</span></div>
+          </div>
+          <div><div class="manager-score-num">${m.ms}</div><span class="manager-badge ${badge.cls}">${badge.label}</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function dirTeam() {
+  const u = state.user;
+  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  const managers = [...new Set(dcLeads.map(l => l.manager))].map(m => managerStats(m, dcLeads));
+  managers.sort((a,b) => b.ms - a.ms);
+  return `
+  <div class="section-header"><div class="section-title">Команда ${u.dealer}</div></div>
+  <div class="manager-list">
+    ${managers.map((m,i) => {
+      const badge = managerBadge(m.ms);
+      return `<div class="manager-row">
+        <div class="manager-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div>
+        <div class="manager-info">
+          <div class="manager-name">${m.name}</div>
+          <div class="manager-stats"><span>📋 ${m.leads} лидов</span><span>✅ ${m.contracts} контракт.</span><span>🚗 ${m.td} ТД</span><span>📄 ${m.kp} КП</span><span>📊 РЛ: ${m.score}%</span><span>🔄 ${m.conv}% конв.</span></div>
+          ${scoreBar(m.score)}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <div class="manager-score-num">${m.ms}</div>
+          <span class="manager-badge ${badge.cls}">${badge.label}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function dirReport() {
+  const u = state.user;
+  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  const avgSc = avgScore(dcLeads);
+  const fields = [
+    {label:'📱 Телефон',     pct: Math.round(dcLeads.filter(l=>l.phone).length/Math.max(dcLeads.length,1)*100)},
+    {label:'🔧 Модификация', pct: Math.round(dcLeads.filter(l=>l.modification).length/Math.max(dcLeads.length,1)*100)},
+    {label:'📋 ОПД',         pct: Math.round(dcLeads.filter(l=>l.opd).length/Math.max(dcLeads.length,1)*100)},
+    {label:'🎨 Цвет',        pct: Math.round(dcLeads.filter(l=>l.color).length/Math.max(dcLeads.length,1)*100)},
+    {label:'🚗 Тест-драйв',  pct: Math.round(dcLeads.filter(l=>l.testDrive).length/Math.max(dcLeads.length,1)*100)},
+    {label:'📄 КП',          pct: Math.round(dcLeads.filter(l=>l.kp).length/Math.max(dcLeads.length,1)*100)},
+  ];
+  return `
+  <div class="card" style="text-align:center;">
+    <div class="card-title">Средний скоринг ДЦ</div>
+    <div class="score-big"><div class="num" style="color:${scoreColor(avgSc)}">${avgSc}%</div><div class="lbl">${dcLeads.length} рабочих листов</div></div>
+    <div style="font-size:12px;color:var(--text2);">Цель: ≥ 70% · Эталон сети: 82%</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Заполненность полей по ДЦ</div>
+    ${fields.map(f=>`<div class="progress-wrap">
+      <div class="progress-label"><span>${f.label}</span><strong>${f.pct}%</strong></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${f.pct}%;background:${scoreColor(f.pct)}"></div></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NETWORK VIEWS (DISTR / OWNER)
+// ═══════════════════════════════════════════════════════════════
+function networkHome() {
+  const all = state.leads;
+  const dealers = [...new Set(all.map(l => l.dealer))].map(d => dealerStats(d, all));
+  dealers.sort((a,b) => b.score - a.score);
+  const total = all.length;
+  const contracts = all.filter(l => l.status === 'Контракт').length;
+  const stuck = all.filter(l => l.status === 'В работе').length;
+  const avgSc = avgScore(all);
+
+  return `
+  <div class="section-header">
+    <div><div class="section-title">Kaiyi Kazakhstan — Сеть</div><div class="section-sub">${dealers.length} дилеров · ${total} лидов</div></div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card blue"><div class="stat-val">${total}</div><div class="stat-label">Лидов в сети</div></div>
+    <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
+    <div class="stat-card orange"><div class="stat-val">${stuck}</div><div class="stat-label">Зависших</div></div>
+    <div class="stat-card ${avgSc>=70?'green':avgSc>=50?'orange':'red'}"><div class="stat-val">${avgSc}%</div><div class="stat-label">Скоринг сети</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Воронка по всей сети</div>
+    <div class="funnel" id="net-funnel"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">🏆 Топ-3 дилера</div><div style="font-size:11px;color:var(--green2)">По скорингу РЛ</div></div>
+    ${dealers.slice(0,3).map((d,i)=>`
+    <div class="flex items-center gap8 mb8">
+      <div style="font-size:18px;font-weight:800;color:${i===0?'#F9A825':i===1?'#78909C':'#8D6E63'};min-width:24px;">${i+1}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${d.name}</div><div style="font-size:11px;color:var(--text2)">${d.leads} лидов · ${d.contracts} контракт. · ${d.managers} мен.</div></div>
+      <div style="font-size:20px;font-weight:800;color:${scoreColor(d.score)}">${d.score}%</div>
+    </div>`).join('<div class="divider"></div>')}
+  </div>
+  ${dealers[dealers.length-1] ? `<div class="card"><div class="alert-list"><div class="alert-item red"><div class="alert-icon">⚠️</div><div class="alert-text"><strong>Требует внимания: ${dealers[dealers.length-1].name}</strong><span>Скоринг ${dealers[dealers.length-1].score}% · ${dealers[dealers.length-1].stuck} зависших лидов</span></div></div></div></div>` : ''}`;
+}
+
+function networkDealers() {
+  const all = state.leads;
+  const dealers = [...new Set(all.map(l => l.dealer))].map(d => dealerStats(d, all));
+  dealers.sort((a,b) => b.score - a.score);
+
+  return `
+  <div class="section-header"><div class="section-title">Рейтинг дилеров (${dealers.length})</div></div>
+  <div class="dealer-grid">
+    ${dealers.map((d,i) => {
+      const c = scoreColor(d.score);
+      return `<div class="dealer-card" style="border-top:3px solid ${c}">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:14px;font-weight:800;color:${i===0?'#F9A825':i===1?'#78909C':i===2?'#8D6E63':'var(--text2)'}">#${i+1}</span>
+          <div class="dc-name">${d.name}</div>
+        </div>
+        <div class="dc-score-circle">
+          <div class="dc-score-num" style="color:${c}">${d.score}%</div>
+          <div style="font-size:11px;color:var(--text2);">скоринг РЛ</div>
+        </div>
+        <div class="dc-mini-stats">
+          <div class="dc-stat">📋 ${d.leads} лидов</div>
+          <div class="dc-stat">✅ ${d.contracts} контракт.</div>
+          <div class="dc-stat">⏳ ${d.stuck} зависших</div>
+          <div class="dc-stat">👥 ${d.managers} мен.</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function networkAnalytics() {
+  const all = state.leads;
+  const sources = {};
+  all.forEach(l => { const s = l.source||'Неизвестно'; sources[s] = (sources[s]||0)+1; });
+  const models = {};
+  all.forEach(l => { const m = l.model||'Не указан'; models[m] = (models[m]||0)+1; });
+
+  return `
+  <div class="card">
+    <div class="card-title">📣 Источники лидов</div>
+    ${Object.entries(sources).sort((a,b)=>b[1]-a[1]).map(([s,n]) => {
+      const pct = Math.round(n/all.length*100);
+      return `<div class="progress-wrap">
+        <div class="progress-label"><span>${s}</span><strong>${n} · ${pct}%</strong></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--blue)"></div></div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="card">
+    <div class="card-title">🚗 Спрос по моделям</div>
+    <canvas id="model-chart" height="160"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Скоринг по дилерам</div>
+    <canvas id="dealer-chart" height="160"></canvas>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CSV UPLOAD
+// ═══════════════════════════════════════════════════════════════
+function csvUpload() {
+  return `
+  <div class="section-header"><div class="section-title">📂 Загрузка данных из DNM</div></div>
+  <div class="card">
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+      <div class="upload-icon">📂</div>
+      <p><strong>Нажми чтобы выбрать файл</strong></p>
+      <p>или перетащи CSV из DNM сюда</p>
+      <div class="upload-hint">Поддерживается: .csv · Кодировка: UTF-8 или Windows-1251</div>
+    </div>
+    <div class="card-title">📋 Ожидаемые колонки CSV</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      ID · Дата · Клиент · Телефон · Менеджер · Дилер · Статус · Модель ·
+      Модификация · Цвет · ОПД · Дата_ТД · Дата_КП · Источник · Следующее_действие · Дата_след_действия
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">ℹ️ Как экспортировать из DNM</div>
+    <div class="alert-list">
+      <div class="alert-item blue"><div class="alert-icon">1️⃣</div><div class="alert-text"><strong>Открой DNM CRM</strong><span>Перейди в раздел "Рабочие листы" → "Все РЛ"</span></div></div>
+      <div class="alert-item blue"><div class="alert-icon">2️⃣</div><div class="alert-text"><strong>Выбери период</strong><span>Фильтр по дате — рекомендуем последние 90 дней</span></div></div>
+      <div class="alert-item blue"><div class="alert-icon">3️⃣</div><div class="alert-text"><strong>Экспорт в Excel/CSV</strong><span>Кнопка "Экспорт" → CSV → Сохрани файл</span></div></div>
+      <div class="alert-item blue"><div class="alert-icon">4️⃣</div><div class="alert-text"><strong>Загрузи выше</strong><span>Перетащи или выбери сохранённый файл</span></div></div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CSV PARSER
+// ═══════════════════════════════════════════════════════════════
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) parseCSVFile(file);
+}
+
+function handleCSV(e) {
+  const file = e.target.files[0];
+  if (file) parseCSVFile(file);
+}
+
+function parseCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      const lines = text.split('\n').filter(l => l.trim());
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+      const leads = [];
+      for (let i=1; i<lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim().replace(/"/g,''));
+        const row = {};
+        headers.forEach((h,j) => row[h] = vals[j]||'');
+        const lead = {
+          id:           row['ID']||`RL-${i}`,
+          date:         row['Дата']||'',
+          client:       row['Клиент']||row['ФИО']||'Неизвестно',
+          phone:        row['Телефон']||null,
+          manager:      row['Менеджер']||'',
+          dealer:       row['Дилер']||row['ДЦ']||'',
+          status:       row['Статус']||'Новый',
+          model:        row['Модель']||null,
+          modification: row['Модификация']||null,
+          color:        row['Цвет']||null,
+          opd:          (row['ОПД']||'').toLowerCase()==='да'||row['ОПД']==='1'||row['ОПД']==='true',
+          testDrive:    row['Дата_ТД']||null,
+          kp:           row['Дата_КП']||null,
+          source:       row['Источник']||null,
+          nextAction:   row['Следующее_действие']||null,
+          nextActionDate: row['Дата_след_действия']||null,
+          lastContact:  row['Последний_контакт']||null,
+        };
+        if (lead.client && lead.client !== 'Неизвестно') leads.push(lead);
+      }
+      if (leads.length) {
+        state.leads = leads;
+        buildNotifications();
+        alert(`✅ Загружено ${leads.length} рабочих листов из DNM`);
+        switchTab(0);
+      } else {
+        alert('❌ Не удалось прочитать данные. Проверь формат CSV.');
+      }
+    } catch(err) {
+      alert('❌ Ошибка: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LEAD DETAIL MODAL
+// ═══════════════════════════════════════════════════════════════
+function showLead(id) {
+  const l = state.leads.find(x => x.id === id);
+  if (!l) return;
+  const s = scoreRl(l);
+  const fields = [
+    {label:'📱 Телефон',      val:l.phone||'—',         filled:!!l.phone,        weight:30},
+    {label:'🔧 Модификация',  val:l.modification||'—',  filled:!!l.modification, weight:20},
+    {label:'📋 ОПД',          val:l.opd?'Получено':'Нет',filled:l.opd,           weight:15},
+    {label:'🎨 Цвет',         val:l.color||'—',         filled:!!l.color,        weight:10},
+    {label:'🚗 Тест-драйв',   val:l.testDrive||'—',     filled:!!l.testDrive,    weight:10},
+    {label:'📄 КП',           val:l.kp||'—',            filled:!!l.kp,           weight:10},
+    {label:'📣 Источник',     val:l.source||'—',        filled:!!l.source,       weight:5},
+  ];
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">${l.client}</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="score-big" style="margin:8px 0 16px">
+      <div class="num" style="color:${scoreColor(s)}">${s}%</div>
+      <div class="lbl">Скоринг рабочего листа</div>
+    </div>
+    <div class="field-row">
+      <div class="modal-field"><label>Статус</label><div class="val">${statusBadge(l.status)}</div></div>
+      <div class="modal-field"><label>Дата создания</label><div class="val">${l.date}</div></div>
+      <div class="modal-field"><label>Дилер</label><div class="val">${l.dealer}</div></div>
+      <div class="modal-field"><label>Менеджер</label><div class="val">${l.manager}</div></div>
+      <div class="modal-field"><label>Модель</label><div class="val">${l.model||'—'}</div></div>
+      <div class="modal-field"><label>Следующий шаг</label><div class="val">${l.nextAction||'—'} ${l.nextActionDate?`<span class="text-gray">(${l.nextActionDate})</span>`:''}</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="card-title" style="margin-bottom:10px;">📋 Заполненность полей</div>
+    ${fields.map(f=>`
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>${f.label} <span class="text-gray">(${f.weight}%)</span></span>
+        <strong style="color:${f.filled?'var(--green2)':'var(--red)'}">${f.val}</strong>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${f.filled?100:0}%;background:${f.filled?'var(--green2)':'var(--red)'}"></div></div>
+    </div>`).join('')}`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════════
+function initCharts() {
+  const role = state.user?.role;
+  const myDealer = state.user?.dealer;
+  const all = state.leads;
+  const dcLeads = all.filter(l => l.dealer === myDealer);
+
+  // Funnel helper
+  function drawFunnel(elId, leads) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const statuses = ['Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
+    const colors   = ['#1565C0','#00B0FF','#2E7D32','#6A1B9A','#00C853','#D32F2F'];
+    const maxCount = Math.max(...statuses.map(s => leads.filter(l=>l.status===s).length), 1);
+    el.innerHTML = statuses.map((s,i) => {
+      const count = leads.filter(l=>l.status===s).length;
+      const pct = Math.round(count/maxCount*100);
+      return `<div class="funnel-row">
+        <span class="funnel-label">${s}</span>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="width:${pct}%;background:${colors[i]}">${pct>15?count:''}</div>
+        </div>
+        <span class="funnel-count">${count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  if (document.getElementById('my-funnel'))  drawFunnel('my-funnel', all.filter(l=>l.manager===state.user.name));
+  if (document.getElementById('rop-funnel')) drawFunnel('rop-funnel', dcLeads);
+  if (document.getElementById('dir-funnel')) drawFunnel('dir-funnel', dcLeads);
+  if (document.getElementById('net-funnel')) drawFunnel('net-funnel', all);
+
+  // Model chart
+  const modelEl = document.getElementById('model-chart');
+  if (modelEl) {
+    const models = {};
+    all.forEach(l => { const m = l.model||'Не указан'; models[m]=(models[m]||0)+1; });
+    const sorted = Object.entries(models).sort((a,b)=>b[1]-a[1]);
+    state.chartInstances['model'] = new Chart(modelEl, {
+      type:'bar',
+      data: { labels: sorted.map(x=>x[0]), datasets:[{ data: sorted.map(x=>x[1]), backgroundColor:'#1565C0', borderRadius:4 }] },
+      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, ticks:{stepSize:1}}, x:{ticks:{font:{size:10}}} } }
+    });
+  }
+
+  // Dealer score chart
+  const dealerEl = document.getElementById('dealer-chart');
+  if (dealerEl) {
+    const dealers = [...new Set(all.map(l=>l.dealer))].map(d => dealerStats(d, all)).sort((a,b)=>b.score-a.score);
+    state.chartInstances['dealer'] = new Chart(dealerEl, {
+      type:'bar',
+      data: {
+        labels: dealers.map(d=>d.name.replace('Kaiyi ','')),
+        datasets:[{ data: dealers.map(d=>d.score), backgroundColor: dealers.map(d=>scoreColor(d.score)), borderRadius:4 }]
+      },
+      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, max:100, ticks:{callback:v=>v+'%'}}, x:{ticks:{font:{size:10}}} } }
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTO-REFRESH SIMULATION (every 10 min shows toast)
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg, type='blue') {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type==='green'?'#2E7D32':type==='red'?'#D32F2F':'#1565C0'};color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// Simulate new lead notification after 15 seconds
+setTimeout(() => {
+  if (state.user) {
+    state.notifications.unshift({type:'green', text:'🆕 Новый рабочий лист создан в DNM: <strong>Бауыржан Тəуекел</strong> — Kaiyi Astana', time:'Только что'});
+    document.getElementById('notif-count').textContent = state.notifications.length;
+    showToast('🆕 Новый РЛ создан в DNM — Kaiyi Astana', 'green');
+  }
+}, 15000);
+
+// Simulate 10-min sync
+setInterval(() => {
+  if (state.user) showToast('🔄 Данные обновлены из DNM');
+}, 600000);
+
+// ── PWA Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
