@@ -1,5 +1,11 @@
-const CACHE = 'vmd-os-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'vmd-os-v2';
+const ASSETS = [
+  '/vmd-os/',
+  '/vmd-os/index.html',
+  '/vmd-os/manifest.json',
+  '/vmd-os/icon-192.png',
+  '/vmd-os/icon-512.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
