@@ -386,6 +386,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .archive-empty{text-align:center;padding:32px;color:var(--text2);}
 .archive-empty .ae-icon{font-size:40px;margin-bottom:8px;}
 .archive-empty p{font-size:13px;}
+
+/* ── GLOBAL SEARCH OVERLAY ─────────────────────────────── */
+#search-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,42,.75);z-index:400;padding:16px;overflow-y:auto;}
+#search-overlay.open{display:block;}
+.search-box{background:var(--card);border-radius:16px;max-width:640px;margin:0 auto;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+.search-input-wrap{display:flex;align-items:center;gap:10px;border:2px solid var(--blue);border-radius:10px;padding:10px 14px;margin-bottom:14px;background:#fff;}
+.search-input-wrap input{flex:1;border:none;outline:none;font-size:15px;color:var(--text);background:transparent;}
+.search-input-wrap .si-icon{font-size:18px;color:var(--text2);}
+.search-input-wrap .si-clear{background:none;border:none;font-size:16px;cursor:pointer;color:var(--text2);padding:0;}
+.search-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.sf-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;}
+.sf-chip.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.search-count{font-size:12px;color:var(--text2);margin-bottom:10px;}
+.sr-item{padding:10px 12px;border-radius:10px;background:var(--bg);margin-bottom:8px;cursor:pointer;transition:background .15s;}
+.sr-item:hover{background:#e8f0fe;}
+.sr-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.sr-id{font-size:10px;font-weight:700;color:var(--text2);background:var(--border);padding:2px 6px;border-radius:4px;}
+.sr-name{font-weight:700;font-size:14px;flex:1;}
+.sr-meta{font-size:11px;color:var(--text2);display:flex;gap:8px;flex-wrap:wrap;}
+.sr-empty{text-align:center;padding:32px;color:var(--text2);}
+.sr-empty .sr-icon{font-size:36px;margin-bottom:8px;}
+
+/* ── ARCHIVE ALL RL ─────────────────────────────────────── */
+.rl-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.rl-search-wrap{display:flex;align-items:center;gap:8px;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;background:#fff;flex:1;min-width:200px;}
+.rl-search-wrap:focus-within{border-color:var(--blue);}
+.rl-search-wrap input{border:none;outline:none;font-size:13px;color:var(--text);background:transparent;width:100%;}
+.rl-search-wrap span{font-size:15px;color:var(--text2);}
+.rl-filter-select{padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);background:var(--card);outline:none;cursor:pointer;}
+.rl-filter-select:focus{border-color:var(--blue);}
+.rl-sort-btn{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--text2);background:var(--card);cursor:pointer;white-space:nowrap;}
+.rl-sort-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.rl-stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.rl-stat-pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;background:var(--card);box-shadow:var(--shadow);}
+mark{background:#FFF176;border-radius:2px;padding:0 2px;}
 </style>
 </head>
 <body>
@@ -423,6 +458,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <div class="topbar-right">
       <button class="cal-toggle-btn" id="cal-toggle-btn" onclick="toggleMobileSidebar()" title="Календарь">📅</button>
+      <button onclick="openSearch()" title="Поиск РЛ" style="background:none;border:none;color:#fff;cursor:pointer;padding:4px 8px;font-size:18px;line-height:1;">🔍</button>
       <button class="notif-btn" onclick="toggleNotif()">
         🔔
         <span class="notif-count" id="notif-count">0</span>
@@ -503,6 +539,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     <div id="day-modal-body"></div>
     <button onclick="openMeetingModal()" style="width:100%;margin-top:12px;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">+ Добавить на этот день</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ GLOBAL SEARCH OVERLAY ════════════════ -->
+<div id="search-overlay" onclick="handleSearchOverlayClick(event)">
+  <div class="search-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:700;">🔍 Поиск рабочих листов</div>
+      <button onclick="closeSearch()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1;">✕</button>
+    </div>
+    <div class="search-input-wrap">
+      <span class="si-icon">🔍</span>
+      <input id="search-input" type="text" placeholder="Поиск по ID, имени, фамилии, модели, бренду..." oninput="doSearch(this.value)" autocomplete="off">
+      <button class="si-clear" onclick="clearSearch()" title="Очистить">✕</button>
+    </div>
+    <div class="search-filters" id="search-filters"></div>
+    <div class="search-count" id="search-count"></div>
+    <div id="search-results"></div>
   </div>
 </div>
 
@@ -890,11 +944,11 @@ document.addEventListener('click', e => {
 //  RENDER ROUTER
 // ═══════════════════════════════════════════════════════════════
 const ROLE_TABS = {
-  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📅 Календарь', view:'managerCalendar'}, {label:'📊 Мой скоринг', view:'managerScore'}, {label:'♻️ Архив', view:'managerArchive'}],
-  rop:      [{label:'🏠 Главная', view:'ropHome'}, {label:'👥 Менеджеры', view:'ropManagers'}, {label:'📋 Все лиды', view:'ropLeads'}],
-  director: [{label:'🏠 ДЦ Обзор', view:'dirHome'}, {label:'👥 Команда', view:'dirTeam'}, {label:'📊 Отчёт', view:'dirReport'}, {label:'📂 CSV', view:'csvUpload'}],
-  distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📂 CSV', view:'csvUpload'}],
-  owner:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📂 CSV', view:'csvUpload'}],
+  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📅 Календарь', view:'managerCalendar'}, {label:'📊 Мой скоринг', view:'managerScore'}, {label:'♻️ Архив', view:'managerArchive'}, {label:'📁 Все РЛ', view:'archiveAll'}],
+  rop:      [{label:'🏠 Главная', view:'ropHome'}, {label:'👥 Менеджеры', view:'ropManagers'}, {label:'📋 Все лиды', view:'ropLeads'}, {label:'📁 Архив РЛ', view:'archiveAll'}],
+  director: [{label:'🏠 ДЦ Обзор', view:'dirHome'}, {label:'👥 Команда', view:'dirTeam'}, {label:'📊 Отчёт', view:'dirReport'}, {label:'📁 Архив РЛ', view:'archiveAll'}, {label:'📂 CSV', view:'csvUpload'}],
+  distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📁 Все РЛ', view:'archiveAll'}, {label:'📂 CSV', view:'csvUpload'}],
+  owner:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📁 Все РЛ', view:'archiveAll'}, {label:'📂 CSV', view:'csvUpload'}],
 };
 
 function renderApp() {
@@ -930,7 +984,7 @@ function renderApp() {
   const el = document.getElementById('main-content');
   el.innerHTML = '';
   const builders = {
-    managerHome, managerLeads, managerCalendar, managerScore, managerArchive,
+    managerHome, managerLeads, managerCalendar, managerScore, managerArchive, archiveAll,
     ropHome, ropManagers, ropLeads,
     dirHome, dirTeam, dirReport,
     networkHome, networkDealers, networkAnalytics,
@@ -1265,6 +1319,300 @@ function managerArchive() {
   </div>` : ''}
   `;
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  ARCHIVE ALL RL (universal view with search + filters)
+// ═══════════════════════════════════════════════════════════════
+
+// Returns leads scoped to current user's role
+function getAccessibleLeads() {
+  const u = state.user;
+  if (!u) return [];
+  if (u.role === 'manager') return state.leads.filter(l => l.manager === u.name);
+  if (u.role === 'rop' || u.role === 'director') return state.leads.filter(l => l.dealer === u.dealer);
+  return state.leads; // distr, owner see all
+}
+
+// Archive state (persists while tab is open)
+let archState = { q: '', status: '', manager: '', dealer: '', model: '', sort: 'date_desc' };
+
+function archiveAll() {
+  const u = state.user;
+  const allLeads = getAccessibleLeads();
+  const statuses = ['Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
+  const managers = [...new Set(allLeads.map(l => l.manager))].sort();
+  const dealers  = [...new Set(allLeads.map(l => l.dealer))].sort();
+  const models   = [...new Set(allLeads.map(l => l.model).filter(Boolean))].sort();
+
+  // Apply filters + search
+  let leads = applyArchFilter(allLeads, archState);
+
+  // Stats
+  const total = allLeads.length;
+  const filtered = leads.length;
+  const contracts = leads.filter(l => l.status === 'Контракт').length;
+  const refused = leads.filter(l => l.status === 'Отказ').length;
+  const hot = leads.filter(l => is72hAlert(l)).length;
+
+  const showDealerFilter = u.role === 'distr' || u.role === 'owner';
+  const showManagerFilter = u.role !== 'manager';
+
+  return `
+  <div class="section-header">
+    <div><div class="section-title">📁 Архив рабочих листов</div><div class="section-sub">${total} всего · ${filtered} найдено</div></div>
+  </div>
+
+  <!-- Search bar -->
+  <div class="rl-filter-bar">
+    <div class="rl-search-wrap">
+      <span>🔍</span>
+      <input type="text" placeholder="ID (RL-001), имя, фамилия, модель, бренд..." value="${archState.q}"
+        oninput="archState.q=this.value;updateArchive()" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Filters row -->
+  <div class="rl-filter-bar">
+    <select class="rl-filter-select" onchange="archState.status=this.value;updateArchive()">
+      <option value="">Все статусы</option>
+      ${statuses.map(s=>`<option value="${s}" ${archState.status===s?'selected':''}>${s}</option>`).join('')}
+    </select>
+    ${showManagerFilter ? `<select class="rl-filter-select" onchange="archState.manager=this.value;updateArchive()">
+      <option value="">Все менеджеры</option>
+      ${managers.map(m=>`<option value="${m}" ${archState.manager===m?'selected':''}>${m.split(' ')[0]} ${(m.split(' ')[1]||'')[0]||''}.</option>`).join('')}
+    </select>` : ''}
+    ${showDealerFilter ? `<select class="rl-filter-select" onchange="archState.dealer=this.value;updateArchive()">
+      <option value="">Все дилеры</option>
+      ${dealers.map(d=>`<option value="${d}" ${archState.dealer===d?'selected':''}>${d}</option>`).join('')}
+    </select>` : ''}
+    <select class="rl-filter-select" onchange="archState.model=this.value;updateArchive()">
+      <option value="">Все модели</option>
+      ${models.map(m=>`<option value="${m}" ${archState.model===m?'selected':''}>${m}</option>`).join('')}
+    </select>
+    <select class="rl-filter-select" onchange="archState.sort=this.value;updateArchive()">
+      <option value="date_desc" ${archState.sort==='date_desc'?'selected':''}>Дата ↓</option>
+      <option value="date_asc"  ${archState.sort==='date_asc'?'selected':''}>Дата ↑</option>
+      <option value="score_desc"${archState.sort==='score_desc'?'selected':''}>Скоринг ↓</option>
+      <option value="name_asc"  ${archState.sort==='name_asc'?'selected':''}>Имя A–Я</option>
+    </select>
+    ${archState.q||archState.status||archState.manager||archState.dealer||archState.model?`<button onclick="clearArchFilter()" style="padding:7px 12px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✕ Сбросить</button>`:''}
+  </div>
+
+  <!-- Summary pills -->
+  <div class="rl-stats-row">
+    <span class="rl-stat-pill" style="color:var(--blue);">📋 ${filtered} РЛ</span>
+    <span class="rl-stat-pill" style="color:var(--green2);">✅ ${contracts} контракт.</span>
+    <span class="rl-stat-pill" style="color:var(--red);">❌ ${refused} отказов</span>
+    ${hot?`<span class="rl-stat-pill" style="color:var(--red);">🔥 ${hot} горящих</span>`:''}
+  </div>
+
+  <!-- Results -->
+  <div id="archive-list">
+    ${renderArchiveList(leads, archState.q)}
+  </div>`;
+}
+
+function applyArchFilter(leads, st) {
+  let res = [...leads];
+  const q = (st.q||'').toLowerCase().trim();
+  if (q) {
+    res = res.filter(l =>
+      l.id.toLowerCase().includes(q) ||
+      l.client.toLowerCase().includes(q) ||
+      (l.model||'').toLowerCase().includes(q) ||
+      (l.dealer||'').toLowerCase().includes(q) ||
+      (l.manager||'').toLowerCase().includes(q) ||
+      (l.source||'').toLowerCase().includes(q)
+    );
+  }
+  if (st.status)  res = res.filter(l => l.status === st.status);
+  if (st.manager) res = res.filter(l => l.manager === st.manager);
+  if (st.dealer)  res = res.filter(l => l.dealer === st.dealer);
+  if (st.model)   res = res.filter(l => l.model === st.model);
+  // Sort
+  if (st.sort === 'date_asc')   res.sort((a,b)=>a.date.localeCompare(b.date));
+  else if (st.sort==='date_desc') res.sort((a,b)=>b.date.localeCompare(a.date));
+  else if (st.sort==='score_desc') res.sort((a,b)=>scoreRl(b)-scoreRl(a));
+  else if (st.sort==='name_asc') res.sort((a,b)=>a.client.localeCompare(b.client,'ru'));
+  return res;
+}
+
+function hl(text, q) {
+  if (!q || !text) return text||'—';
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+function renderArchiveList(leads, q) {
+  if (!leads.length) return `<div style="text-align:center;padding:40px;color:var(--text2);">
+    <div style="font-size:36px;margin-bottom:8px;">🔍</div>
+    <div style="font-weight:700;margin-bottom:4px;">Ничего не найдено</div>
+    <div style="font-size:12px;">Попробуй другой запрос или сбрось фильтры</div>
+  </div>`;
+
+  const statuses = ['Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
+  return leads.map(l => {
+    const s = scoreRl(l);
+    const sc = scoreColor(s);
+    const hot = is72hAlert(l);
+    const over = isOverdue(l);
+    const qLow = (q||'').toLowerCase();
+    return `<div class="lead-item ${hot&&l.status!=='Контракт'&&l.status!=='Отказ'?'hot72':''}" style="margin-bottom:8px;">
+      <div class="lead-header" onclick="showLead('${l.id}')">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:10px;font-weight:700;color:var(--text2);background:var(--bg);padding:2px 6px;border-radius:4px;">${hl(l.id,qLow)}</span>
+          <span class="lead-name">${hl(l.client,qLow)}</span>
+          ${hot&&l.status!=='Контракт'&&l.status!=='Отказ'?'<span class="hot72-badge">🔥 72ч</span>':''}
+        </div>
+        ${statusBadge(l.status)}
+      </div>
+      <div class="lead-meta" style="margin-top:4px;">
+        <span>🚗 ${hl(l.model||'—',qLow)}</span>
+        <span>👤 ${hl(l.manager,qLow)}</span>
+        <span>🏢 ${hl(l.dealer,qLow)}</span>
+        <span>📅 ${l.date}</span>
+        ${l.source?`<span>📣 ${hl(l.source,qLow)}</span>`:''}
+      </div>
+      <div class="lead-score">
+        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${s}%;background:${sc}"></div></div>
+        <span class="score-label" style="color:${sc}">${s}%</span>
+      </div>
+      ${over&&l.status!=='Контракт'&&l.status!=='Отказ'?`<div style="font-size:11px;color:var(--red);margin-top:4px;">⏰ Просрочено: ${l.nextAction} · ${l.nextActionDate}</div>`:''}
+      <div class="lead-actions">
+        <span style="font-size:11px;color:var(--text2);font-weight:600;">Статус:</span>
+        <div class="status-btns">
+          ${statuses.filter(st=>st!==l.status&&st!=='Отказ').map(st=>
+            `<button class="status-btn" onclick="event.stopPropagation();changeStatus('${l.id}','${st}')">${st}</button>`
+          ).join('')}
+          <button class="status-btn red-btn" onclick="event.stopPropagation();changeStatus('${l.id}','Отказ')">Отказ</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateArchive() {
+  const allLeads = getAccessibleLeads();
+  const leads = applyArchFilter(allLeads, archState);
+  // Update stats pills
+  const contracts = leads.filter(l => l.status === 'Контракт').length;
+  const refused = leads.filter(l => l.status === 'Отказ').length;
+  const hot = leads.filter(l => is72hAlert(l)).length;
+  const statsEl = document.querySelector('.rl-stats-row');
+  if (statsEl) statsEl.innerHTML = `
+    <span class="rl-stat-pill" style="color:var(--blue);">📋 ${leads.length} РЛ</span>
+    <span class="rl-stat-pill" style="color:var(--green2);">✅ ${contracts} контракт.</span>
+    <span class="rl-stat-pill" style="color:var(--red);">❌ ${refused} отказов</span>
+    ${hot?`<span class="rl-stat-pill" style="color:var(--red);">🔥 ${hot} горящих</span>`:''}
+  `;
+  const listEl = document.getElementById('archive-list');
+  if (listEl) listEl.innerHTML = renderArchiveList(leads, archState.q);
+  // Update section sub
+  const sub = document.querySelector('.section-sub');
+  if (sub) sub.textContent = `${allLeads.length} всего · ${leads.length} найдено`;
+}
+
+function clearArchFilter() {
+  archState = { q:'', status:'', manager:'', dealer:'', model:'', sort:'date_desc' };
+  renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  GLOBAL SEARCH (topbar 🔍)
+// ═══════════════════════════════════════════════════════════════
+let _searchQuery = '';
+let _searchStatusFilter = '';
+
+function openSearch() {
+  document.getElementById('search-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('search-input').focus(), 100);
+  renderSearchFilters();
+  doSearch(document.getElementById('search-input').value || '');
+}
+
+function closeSearch() {
+  document.getElementById('search-overlay').classList.remove('open');
+}
+
+function handleSearchOverlayClick(e) {
+  if (e.target === document.getElementById('search-overlay')) closeSearch();
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  _searchQuery = '';
+  doSearch('');
+}
+
+function renderSearchFilters() {
+  const statuses = ['Все','Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
+  document.getElementById('search-filters').innerHTML = statuses.map(s =>
+    `<button class="sf-chip ${_searchStatusFilter===(s==='Все'?'':s)?'active':''}"
+      onclick="setSearchStatus('${s==='Все'?'':s}')">${s}</button>`
+  ).join('');
+}
+
+function setSearchStatus(status) {
+  _searchStatusFilter = status;
+  renderSearchFilters();
+  doSearch(_searchQuery);
+}
+
+function doSearch(q) {
+  _searchQuery = q;
+  const qLow = q.toLowerCase().trim();
+  let leads = getAccessibleLeads();
+  if (qLow) {
+    leads = leads.filter(l =>
+      l.id.toLowerCase().includes(qLow) ||
+      l.client.toLowerCase().includes(qLow) ||
+      (l.model||'').toLowerCase().includes(qLow) ||
+      (l.dealer||'').toLowerCase().includes(qLow) ||
+      (l.manager||'').toLowerCase().includes(qLow) ||
+      (l.phone||'').replace(/[^0-9]/g,'').includes(qLow.replace(/[^0-9]/g,''))
+    );
+  }
+  if (_searchStatusFilter) leads = leads.filter(l => l.status === _searchStatusFilter);
+
+  const countEl = document.getElementById('search-count');
+  const resEl = document.getElementById('search-results');
+  if (!countEl || !resEl) return;
+
+  countEl.textContent = qLow || _searchStatusFilter
+    ? `Найдено: ${leads.length} рабочих листов`
+    : `Всего доступно: ${leads.length} рабочих листов — начни вводить для поиска`;
+
+  if (!qLow && !_searchStatusFilter) {
+    resEl.innerHTML = `<div class="sr-empty"><div class="sr-icon">🔍</div><div style="font-size:13px;color:var(--text2);">Введи имя клиента, ID (RL-001), модель или номер телефона</div></div>`;
+    return;
+  }
+
+  resEl.innerHTML = leads.slice(0, 30).map(l => {
+    const s = scoreRl(l);
+    const sc = scoreColor(s);
+    const hot = is72hAlert(l) && l.status!=='Контракт' && l.status!=='Отказ';
+    return `<div class="sr-item" onclick="closeSearch();setTimeout(()=>showLead('${l.id}'),100)">
+      <div class="sr-header">
+        <span class="sr-id">${hl(l.id,qLow)}</span>
+        <span class="sr-name">${hl(l.client,qLow)}</span>
+        ${hot?'<span class="hot72-badge">🔥</span>':''}
+        ${statusBadge(l.status)}
+      </div>
+      <div class="sr-meta">
+        <span>🚗 ${hl(l.model||'—',qLow)}</span>
+        <span>👤 ${hl(l.manager,qLow)}</span>
+        <span>🏢 ${hl(l.dealer,qLow)}</span>
+        <span>📅 ${l.date}</span>
+        <span style="font-weight:700;color:${sc}">RЛ ${s}%</span>
+      </div>
+    </div>`;
+  }).join('') + (leads.length > 30 ? `<div style="text-align:center;padding:12px;font-size:12px;color:var(--text2);">...ещё ${leads.length-30} результатов — уточни запрос</div>` : '');
+}
+
+// Close search on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSearch();
+});
 
 function reactivateLead(id) {
   const lead = state.leads.find(l => l.id === id);
