@@ -96,9 +96,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .alert-text strong{display:block;margin-bottom:1px;}
 .alert-text span{color:var(--text2);font-size:12px;}
 
+/* ── FILTER BAR ────────────────────────────────────────── */
+.filter-bar{display:flex;gap:8px;margin-bottom:10px;}
+.filter-bar select{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);outline:none;}
+.filter-bar select:focus{border-color:var(--blue);}
+
 /* ── LEAD LIST ─────────────────────────────────────────── */
 .lead-list{display:flex;flex-direction:column;gap:8px;}
-.lead-item{background:var(--card);border-radius:10px;padding:12px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s;}
+.lead-item{background:var(--card);border-radius:10px;padding:12px;box-shadow:var(--shadow);transition:transform .15s;}
+.lead-item .lead-header{cursor:pointer;}
 .lead-item:hover{transform:translateY(-1px);}
 .lead-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .lead-name{font-weight:700;font-size:14px;}
@@ -111,6 +117,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .lead-status.refused{background:#FFEBEE;color:#B71C1C;}
 .lead-meta{display:flex;gap:12px;font-size:12px;color:var(--text2);flex-wrap:wrap;}
 .lead-score{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.lead-actions{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.status-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.status-btn{padding:4px 10px;border:1.5px solid var(--blue);border-radius:20px;font-size:11px;font-weight:600;color:var(--blue);background:transparent;cursor:pointer;transition:all .15s;}
+.status-btn:hover{background:var(--blue);color:#fff;}
+.status-btn.red-btn{border-color:var(--red);color:var(--red);}
+.status-btn.red-btn:hover{background:var(--red);color:#fff;}
 .score-bar-bg{flex:1;height:5px;background:#E0E7EF;border-radius:3px;}
 .score-bar-fill{height:5px;border-radius:3px;transition:width .4s;}
 .score-label{font-size:11px;font-weight:700;min-width:36px;text-align:right;}
@@ -364,7 +376,38 @@ let state = {
   notifications: [],
   currentTab: 0,
   chartInstances: {},
+  filter: { status: '', manager: '' },
 };
+
+// ── PERSISTENCE
+function saveLeads() {
+  try { localStorage.setItem('vmd_leads', JSON.stringify(state.leads)); } catch(e){}
+}
+function loadLeads() {
+  try {
+    const d = localStorage.getItem('vmd_leads');
+    if (d) state.leads = JSON.parse(d);
+  } catch(e){}
+}
+function saveSession(login) {
+  try { localStorage.setItem('vmd_session', login); } catch(e){}
+}
+function clearSession() {
+  try { localStorage.removeItem('vmd_session'); } catch(e){}
+}
+function restoreSession() {
+  try {
+    const login = localStorage.getItem('vmd_session');
+    if (login && USERS[login]) {
+      document.getElementById('login-input').value = login;
+      document.getElementById('pass-input').value = USERS[login].pass;
+      doLogin();
+      return true;
+    }
+  } catch(e){}
+  return false;
+}
+loadLeads();
 
 // ═══════════════════════════════════════════════════════════════
 //  SCORING
@@ -400,6 +443,17 @@ function isOverdue(rl) {
   return new Date(rl.nextActionDate) < new Date();
 }
 
+function changeStatus(id, newStatus) {
+  const lead = state.leads.find(l => l.id === id);
+  if (!lead) return;
+  lead.status = newStatus;
+  lead.lastContact = new Date().toISOString().split('T')[0];
+  saveLeads();
+  buildNotifications();
+  renderApp();
+  showToast(`✅ ${lead.client} → ${newStatus}`);
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  LOGIN / LOGOUT
 // ═══════════════════════════════════════════════════════════════
@@ -409,6 +463,8 @@ function doLogin() {
   const u = USERS[login];
   if (!u || u.pass !== pass) { alert('Неверный логин или пароль'); return; }
   state.user = { ...u, login };
+  state.filter = { status: '', manager: '' };
+  saveSession(login);
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
   document.getElementById('role-badge').textContent = ROLE_LABELS[u.role];
@@ -419,7 +475,9 @@ function doLogin() {
 
 function doLogout() {
   if (!confirm('Выйти из системы?')) return;
+  clearSession();
   state.user = null;
+  state.currentTab = 0;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-shell').style.display = 'none';
 }
@@ -654,16 +712,24 @@ function managerHome() {
 
 function managerLeads() {
   const u = state.user;
-  const myLeads = state.leads.filter(l => l.manager === u.name);
+  let leads = state.leads.filter(l => l.manager === u.name);
+  if (state.filter.status) leads = leads.filter(l => l.status === state.filter.status);
+  const statuses = ['Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
   return `
   <div class="section-header">
-    <div class="section-title">Мои лиды (${myLeads.length})</div>
+    <div class="section-title">Мои лиды (${leads.length})</div>
+  </div>
+  <div class="filter-bar">
+    <select onchange="state.filter.status=this.value;renderApp()" style="flex:1">
+      <option value="">Все статусы</option>
+      ${statuses.map(s=>`<option value="${s}" ${state.filter.status===s?'selected':''}>${s}</option>`).join('')}
+    </select>
   </div>
   <div class="lead-list">
-    ${myLeads.map(l => {
+    ${leads.length ? leads.map(l => {
       const s = scoreRl(l);
-      return `<div class="lead-item" onclick="showLead('${l.id}')">
-        <div class="lead-header">
+      return `<div class="lead-item">
+        <div class="lead-header" onclick="showLead('${l.id}')">
           <span class="lead-name">${l.client}</span>
           ${statusBadge(l.status)}
         </div>
@@ -673,8 +739,17 @@ function managerLeads() {
           <span>📅 ${l.date}</span>
         </div>
         ${scoreBar(s)}
+        <div class="lead-actions">
+          <span style="font-size:11px;color:var(--text2);font-weight:600;">Статус:</span>
+          <div class="status-btns">
+            ${statuses.filter(st=>st!==l.status&&st!=='Отказ').map(st=>
+              `<button class="status-btn" onclick="event.stopPropagation();changeStatus('${l.id}','${st}')">${st}</button>`
+            ).join('')}
+            <button class="status-btn red-btn" onclick="event.stopPropagation();changeStatus('${l.id}','Отказ')">Отказ</button>
+          </div>
+        </div>
       </div>`;
-    }).join('')}
+    }).join('') : '<div class="card" style="text-align:center;color:var(--text2);">Нет лидов по выбранному фильтру</div>'}
   </div>`;
 }
 
@@ -773,18 +848,41 @@ function ropManagers() {
 
 function ropLeads() {
   const u = state.user;
-  const dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  let dcLeads = state.leads.filter(l => l.dealer === u.dealer);
+  const managers = [...new Set(dcLeads.map(l => l.manager))];
+  const statuses = ['Новый','В работе','Тест-драйв','КП','Контракт','Отказ'];
+  if (state.filter.status) dcLeads = dcLeads.filter(l => l.status === state.filter.status);
+  if (state.filter.manager) dcLeads = dcLeads.filter(l => l.manager === state.filter.manager);
   return `
   <div class="section-header"><div class="section-title">Все лиды ${u.dealer} (${dcLeads.length})</div></div>
+  <div class="filter-bar">
+    <select onchange="state.filter.status=this.value;renderApp()" style="flex:1">
+      <option value="">Все статусы</option>
+      ${statuses.map(s=>`<option value="${s}" ${state.filter.status===s?'selected':''}>${s}</option>`).join('')}
+    </select>
+    <select onchange="state.filter.manager=this.value;renderApp()" style="flex:1">
+      <option value="">Все менеджеры</option>
+      ${managers.map(m=>`<option value="${m}" ${state.filter.manager===m?'selected':''}>${m.split(' ')[0]}</option>`).join('')}
+    </select>
+  </div>
   <div class="lead-list">
-    ${dcLeads.map(l => {
+    ${dcLeads.length ? dcLeads.map(l => {
       const s = scoreRl(l);
-      return `<div class="lead-item" onclick="showLead('${l.id}')">
-        <div class="lead-header"><span class="lead-name">${l.client}</span>${statusBadge(l.status)}</div>
+      return `<div class="lead-item">
+        <div class="lead-header" onclick="showLead('${l.id}')"><span class="lead-name">${l.client}</span>${statusBadge(l.status)}</div>
         <div class="lead-meta"><span>👤 ${l.manager}</span><span>🚗 ${l.model||'—'}</span><span>📅 ${l.date}</span></div>
         ${scoreBar(s)}
+        <div class="lead-actions">
+          <span style="font-size:11px;color:var(--text2);font-weight:600;">Статус:</span>
+          <div class="status-btns">
+            ${statuses.filter(st=>st!==l.status&&st!=='Отказ').map(st=>
+              `<button class="status-btn" onclick="event.stopPropagation();changeStatus('${l.id}','${st}')">${st}</button>`
+            ).join('')}
+            <button class="status-btn red-btn" onclick="event.stopPropagation();changeStatus('${l.id}','Отказ')">Отказ</button>
+          </div>
+        </div>
       </div>`;
-    }).join('')}
+    }).join('') : '<div class="card" style="text-align:center;color:var(--text2);">Нет лидов по выбранным фильтрам</div>'}
   </div>`;
 }
 
@@ -1215,6 +1313,11 @@ setTimeout(() => {
 setInterval(() => {
   if (state.user) showToast('🔄 Данные обновлены из DNM');
 }, 600000);
+
+// ── Auto-restore session on load
+window.addEventListener('DOMContentLoaded', () => {
+  restoreSession();
+});
 
 // ── PWA Service Worker
 if ('serviceWorker' in navigator) {
