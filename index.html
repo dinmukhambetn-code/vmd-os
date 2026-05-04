@@ -741,6 +741,188 @@ function fmtMoney(n) {
   return n.toLocaleString('ru') + ' ₸';
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  SPEEDOMETER (animated SVG gauge)
+// ═══════════════════════════════════════════════════════════════
+/*
+  value    – current value (e.g. 2.4 for 2.4%)
+  maxVal   – max of scale (e.g. 6 for 0–6%)
+  targetVal– target/goal line
+  label    – text below gauge
+  mode     – 'conv' (conversion %) | 'score' (RЛ scoring 0-100)
+*/
+function speedometerSVG(value, maxVal, targetVal, label, subLabel) {
+  const W = 220, H = 150;
+  const cx = W / 2, cy = H * 0.76;
+  const R = 76, SW = 15; // radius, stroke-width
+
+  const TAU = 2 * Math.PI;
+  const ARC_DEG = 270;             // total sweep
+  const circ = TAU * R;
+  const arcLen  = (ARC_DEG / 360) * circ;
+  const gapLen  = circ - arcLen;
+  const START_DEG = 135;           // needle at 0% → 135° (bottom-left)
+
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  const pct = clamp(value / maxVal, 0, 1);
+  const tPct = clamp(targetVal / maxVal, 0, 1);
+
+  // Zone breakpoints (fraction of arc)
+  // Red: 0-40%, Orange: 40-70%, Green: 70-100%
+  const z1 = 0.40, z2 = 0.30, z3 = 0.30; // widths
+  const rLen = z1 * arcLen, oLen = z2 * arcLen, gLen = z3 * arcLen;
+  const rStart = START_DEG;
+  const oStart = START_DEG + z1 * ARC_DEG;
+  const gStart = START_DEG + (z1+z2) * ARC_DEG;
+
+  const valArcLen = pct * arcLen;
+
+  // Needle angle
+  const needleDeg = START_DEG + pct * ARC_DEG;
+  const targetDeg = START_DEG + tPct * ARC_DEG;
+
+  // Target tick endpoints (short line on rim)
+  const toXY = (deg, rad) => ({
+    x: cx + rad * Math.cos(deg * Math.PI / 180),
+    y: cy + rad * Math.sin(deg * Math.PI / 180)
+  });
+  const t1 = toXY(targetDeg, R - SW/2 - 2);
+  const t2 = toXY(targetDeg, R + SW/2 + 2);
+
+  // Scale labels
+  const midDeg = START_DEG + ARC_DEG / 2; // top of gauge
+  const midVal = (maxVal / 2).toFixed(maxVal < 10 ? 1 : 0);
+  const lbL = toXY(START_DEG + 5, R + SW/2 + 10);
+  const lbR = toXY(START_DEG + ARC_DEG - 5, R + SW/2 + 10);
+  const lbM = toXY(midDeg, R + SW/2 + 12);
+
+  // Color of value
+  const fillColor = pct >= 0.7 ? '#00C853' : pct >= 0.4 ? '#FF6D00' : '#D32F2F';
+  const fillBg    = pct >= 0.7 ? '#E8F5E9' : pct >= 0.4 ? '#FFF3E0' : '#FFEBEE';
+
+  const uid = 'sp_' + Math.random().toString(36).slice(2,7);
+
+  return `
+<div style="text-align:center;">
+  <svg id="${uid}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible;">
+    <defs>
+      <filter id="shadow_${uid}" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.12"/>
+      </filter>
+    </defs>
+
+    <!-- Zone arcs (background colours) -->
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#FFCDD2" stroke-width="${SW}"
+      stroke-dasharray="${rLen} ${circ-rLen}" stroke-linecap="butt"
+      transform="rotate(${rStart} ${cx} ${cy})"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#FFE0B2" stroke-width="${SW}"
+      stroke-dasharray="${oLen} ${circ-oLen}" stroke-linecap="butt"
+      transform="rotate(${oStart} ${cx} ${cy})"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#C8E6C9" stroke-width="${SW}"
+      stroke-dasharray="${gLen} ${circ-gLen}" stroke-linecap="butt"
+      transform="rotate(${gStart} ${cx} ${cy})"/>
+
+    <!-- Value fill arc (animated from 0) -->
+    <circle id="${uid}_arc" cx="${cx}" cy="${cy}" r="${R}" fill="none"
+      stroke="${fillColor}" stroke-width="${SW}" stroke-linecap="butt"
+      stroke-dasharray="0 ${circ}"
+      transform="rotate(${START_DEG} ${cx} ${cy})"
+      data-len="${valArcLen}" data-circ="${circ}"/>
+
+    <!-- Target tick -->
+    <line x1="${t1.x}" y1="${t1.y}" x2="${t2.x}" y2="${t2.y}"
+      stroke="#1565C0" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="${toXY(targetDeg, R+SW/2+14).x}" y="${toXY(targetDeg, R+SW/2+14).y+3}"
+      text-anchor="middle" font-size="8" fill="#1565C0" font-family="-apple-system,sans-serif">
+      Цель ${targetVal}
+    </text>
+
+    <!-- Scale labels -->
+    <text x="${lbL.x}" y="${lbL.y+3}" text-anchor="middle" font-size="8.5" fill="#90A4AE" font-family="-apple-system,sans-serif">0</text>
+    <text x="${lbR.x}" y="${lbR.y+3}" text-anchor="middle" font-size="8.5" fill="#90A4AE" font-family="-apple-system,sans-serif">${maxVal}</text>
+    <text x="${lbM.x}" y="${lbM.y+3}" text-anchor="middle" font-size="8.5" fill="#90A4AE" font-family="-apple-system,sans-serif">${midVal}</text>
+
+    <!-- Needle (animated from START_DEG) -->
+    <line id="${uid}_needle"
+      x1="${cx}" y1="${cy}"
+      x2="${toXY(START_DEG, R - SW - 6).x}"
+      y2="${toXY(START_DEG, R - SW - 6).y}"
+      stroke="#1A2332" stroke-width="2.5" stroke-linecap="round"
+      data-start="${START_DEG}" data-end="${needleDeg}"
+      data-cx="${cx}" data-cy="${cy}" data-r="${R-SW-6}"
+      filter="url(#shadow_${uid})"/>
+
+    <!-- Center hub -->
+    <circle cx="${cx}" cy="${cy}" r="7" fill="#1A2332"/>
+    <circle cx="${cx}" cy="${cy}" r="3.5" fill="#fff"/>
+
+    <!-- Value readout (animated) -->
+    <text id="${uid}_val" x="${cx}" y="${cy - 20}" text-anchor="middle"
+      font-size="24" font-weight="800" fill="${fillColor}"
+      font-family="-apple-system,BlinkMacSystemFont,sans-serif"
+      data-final="${value.toFixed(2)}">0%</text>
+    <text x="${cx}" y="${cy - 4}" text-anchor="middle"
+      font-size="11" fill="#546E7A" font-family="-apple-system,sans-serif">${label}</text>
+    ${subLabel ? `<text x="${cx}" y="${cy+11}" text-anchor="middle"
+      font-size="9.5" fill="#90A4AE" font-family="-apple-system,sans-serif">${subLabel}</text>` : ''}
+  </svg>
+</div>`;
+}
+
+// Animates all speedometers on the page
+function animateSpeedometers() {
+  const DURATION = 1400;
+  const start = performance.now();
+
+  // Collect all gauge elements (arc + needle + value text)
+  const arcs    = [...document.querySelectorAll('[id$="_arc"]')];
+  const needles = [...document.querySelectorAll('[id$="_needle"]')];
+  const vals    = [...document.querySelectorAll('[id$="_val"]')];
+
+  if (!arcs.length) return;
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function step(now) {
+    const t = Math.min((now - start) / DURATION, 1);
+    const e = easeOut(t);
+
+    arcs.forEach(arc => {
+      const len  = parseFloat(arc.dataset.len);
+      const circ = parseFloat(arc.dataset.circ);
+      const cur  = len * e;
+      arc.setAttribute('stroke-dasharray', `${cur} ${circ - cur}`);
+    });
+
+    needles.forEach(needle => {
+      const s   = parseFloat(needle.dataset.start);
+      const end = parseFloat(needle.dataset.end);
+      const ang = (s + (end - s) * e) * Math.PI / 180;
+      const cx  = parseFloat(needle.dataset.cx);
+      const cy  = parseFloat(needle.dataset.cy);
+      const r   = parseFloat(needle.dataset.r);
+      needle.setAttribute('x2', cx + r * Math.cos(ang));
+      needle.setAttribute('y2', cy + r * Math.sin(ang));
+    });
+
+    vals.forEach(el => {
+      const final = parseFloat(el.dataset.final);
+      // Decide decimal places: < 10 → 1 decimal, else integer
+      const display = final < 10
+        ? (final * e).toFixed(1) + '%'
+        : Math.round(final * e) + '%';
+      el.textContent = display;
+      // Update color dynamically
+      const pct = (final * e) / parseFloat(el.closest('svg')?.querySelector('[data-len]')?.dataset.len ? 1 : 1);
+      // keep existing fill color
+    });
+
+    if (t < 1) requestAnimationFrame(step);
+  }
+
+  requestAnimationFrame(step);
+}
+
 // ── SIDEBAR CALENDAR
 let sbYear, sbMonth;
 function renderSidebar() {
@@ -1094,6 +1276,7 @@ function managerHome() {
   const sc = scoreColor(score);
 
   const tasks = active.filter(l => l.nextActionDate).sort((a,b) => a.nextActionDate.localeCompare(b.nextActionDate)).slice(0,5);
+  const convPct = myLeads.length ? (contracts / myLeads.length * 100) : 0;
 
   return `
   <div class="section-header">
@@ -1105,6 +1288,22 @@ function managerHome() {
     <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
     <div class="stat-card orange"><div class="stat-val">${overdue.length}</div><div class="stat-label">Просрочено</div></div>
     <div class="stat-card ${score>=70?'green':score>=50?'orange':'red'}"><div class="stat-val">${score}%</div><div class="stat-label">Скоринг РЛ</div></div>
+  </div>
+
+  <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:center;">
+    ${speedometerSVG(convPct, 10, 3, 'Конверсия', `${contracts} контракт. из ${myLeads.length} лидов`)}
+    <div style="padding:8px 12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Детали</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;"><span>Контракты</span><strong style="color:var(--green2);">${contracts}</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>Активных</span><strong style="color:var(--blue);">${active.length}</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>Отказов</span><strong style="color:var(--red);">${myLeads.filter(l=>l.status==='Отказ').length}</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>Скоринг РЛ</span><strong style="color:${sc};">${score}%</strong></div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:flex;justify-content:space-between;"><span>Цель</span><strong style="color:var(--blue);">3%</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>Статус</span><strong style="color:${convPct>=3?'var(--green2)':convPct>=1.5?'var(--orange)':'var(--red)'};">${convPct>=3?'✅ Норма':convPct>=1.5?'⚠️ Рост':'🔴 Алерт'}</strong></div>
+      </div>
+    </div>
   </div>
 
   ${(() => {
@@ -1230,10 +1429,21 @@ function managerScore() {
     {label:'📣 Источник лида',   weight:5,  filled:myLeads.filter(l=>l.source).length,        total:myLeads.length},
   ];
   return `
-  <div class="card" style="text-align:center;">
-    <div class="card-title">Мой средний скоринг РЛ</div>
-    <div class="score-big"><div class="num" style="color:${scoreColor(score)}">${score}%</div><div class="lbl">${myLeads.length} рабочих листов</div></div>
-    <div style="font-size:12px;color:var(--text2);">Цель: ≥ 70% · Эталон (Karaganda): 82%</div>
+  <div class="card">
+    <div class="card-title" style="text-align:center;">Мой средний скоринг РЛ</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:0;">
+      ${speedometerSVG(score, 100, 70, 'Скоринг РЛ', `${myLeads.length} рабочих листов`)}
+      <div style="padding:8px 12px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Уровень</div>
+        ${[{lo:80,hi:100,l:'🏆 Эталон',c:'#F9A825'},{lo:70,hi:79,l:'✅ Норма',c:'var(--green2)'},{lo:50,hi:69,l:'📈 Рост',c:'var(--orange)'},{lo:0,hi:49,l:'⚠️ Алерт',c:'var(--red)'}].map(z=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;opacity:${score>=z.lo&&score<=z.hi?1:0.4};">
+          <div style="width:4px;height:24px;background:${z.c};border-radius:2px;flex-shrink:0;"></div>
+          <div><div style="font-size:12px;font-weight:700;color:${z.c};">${z.l}</div><div style="font-size:10px;color:var(--text2);">${z.lo}–${z.hi}%</div></div>
+          ${score>=z.lo&&score<=z.hi?`<span style="margin-left:auto;font-size:18px;font-weight:800;color:${z.c};">${score}%</span>`:''}
+        </div>`).join('')}
+        <div style="font-size:11px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">Эталон сети: 82%</div>
+      </div>
+    </div>
   </div>
   <div class="card">
     <div class="card-title">📋 Заполненность полей</div>
@@ -1879,6 +2089,21 @@ function ropHome() {
     </div>
   </div>
 
+  <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:center;">
+    ${speedometerSVG(parseFloat(conv), 10, 3, 'Конверсия ДЦ', `${contracts} контракт. из ${dcLeads.length} лидов`)}
+    <div style="padding:8px 12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Команда</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;"><span>Менеджеров</span><strong>${managers.length}</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>Контракты</span><strong style="color:var(--green2);">${contracts}</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>🔥 Горящих 72ч</span><strong style="color:${hot72.length?'var(--red)':'var(--green2)'};">${hot72.length}</strong></div>
+        <div style="display:flex;justify-content:space-between;"><span>Без контакта</span><strong style="color:${noContact?'var(--red)':'var(--green2)'};">${noContact}</strong></div>
+        <div style="height:1px;background:var(--border);"></div>
+        <div style="display:flex;justify-content:space-between;"><span>Статус</span><strong style="color:${parseFloat(conv)>=3?'var(--green2)':parseFloat(conv)>=1.5?'var(--orange)':'var(--red)'};">${parseFloat(conv)>=3?'✅ Норма':parseFloat(conv)>=1.5?'⚠️ Рост':'🔴 Алерт'}</strong></div>
+      </div>
+    </div>
+  </div>
+
   ${noContact ? `<div class="card"><div class="alert-list"><div class="alert-item red"><div class="alert-icon">📞</div><div class="alert-text"><strong>${noContact} новых лидов без первого контакта</strong><span>Нужно срочно назначить менеджера</span></div></div></div></div>` : ''}
   <div class="card">
     <div class="card-title">📊 Воронка команды</div>
@@ -1998,6 +2223,11 @@ function dirHome() {
     </div>
   </div>
 
+  <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:center;">
+    ${speedometerSVG(parseFloat(conv), 10, 3, 'Конверсия ДЦ', `${contracts} контракт. из ${dcLeads.length}`)}
+    ${speedometerSVG(avgSc, 100, 70, 'Скоринг РЛ', `Эталон 82% · Цель 70%`)}
+  </div>
+
   <div class="card">
     <div class="card-title">📊 Воронка ДЦ</div>
     <div class="funnel" id="dir-funnel"></div>
@@ -2109,6 +2339,11 @@ function networkHome() {
       <div class="revenue-row"><span class="rv-label">💰 Ср. чек по рынку KZ</span><span class="rv-val" style="color:#6BCB77;">11.9 млн ₸</span></div>
     </div>
   </div>
+  <div class="card" style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:center;">
+    ${speedometerSVG(total ? (contracts/total*100) : 0, 10, 3, 'Конверсия сети', `${contracts} контракт. из ${total}`)}
+    ${speedometerSVG(avgSc, 100, 70, 'Скоринг РЛ сети', `${dealers.length} дилеров`)}
+  </div>
+
   <div class="card">
     <div class="card-title">📊 Воронка по всей сети</div>
     <div class="funnel" id="net-funnel"></div>
@@ -2362,6 +2597,9 @@ function initCharts() {
   if (document.getElementById('rop-funnel')) drawFunnel('rop-funnel', dcLeads);
   if (document.getElementById('dir-funnel')) drawFunnel('dir-funnel', dcLeads);
   if (document.getElementById('net-funnel')) drawFunnel('net-funnel', all);
+
+  // Animate speedometers (runs after DOM is ready)
+  setTimeout(animateSpeedometers, 50);
 
   // Model chart
   const modelEl = document.getElementById('model-chart');
