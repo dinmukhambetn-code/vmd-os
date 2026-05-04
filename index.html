@@ -358,6 +358,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .text-blue{color:var(--blue);}.text-gray{color:var(--text2);}
 .bold{font-weight:700;}.mt8{margin-top:8px;}.mb8{margin-bottom:8px;}
 .divider{height:1px;background:var(--border);margin:12px 0;}
+
+/* ── 72h ALERT ─────────────────────────────────────────── */
+.lead-item.hot72{border-left:3px solid var(--red);animation:pulse72 2s ease-in-out infinite;}
+@keyframes pulse72{0%,100%{box-shadow:0 2px 8px rgba(211,47,47,.15);}50%{box-shadow:0 2px 16px rgba(211,47,47,.40);}}
+.hot72-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#fff;background:var(--red);padding:2px 7px;border-radius:10px;margin-left:6px;}
+
+/* ── REVENUE CALCULATOR ────────────────────────────────── */
+.revenue-card{background:linear-gradient(135deg,#1B0000,#3D0000);border-radius:12px;padding:16px;color:#fff;margin-bottom:12px;}
+.revenue-card .rev-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.7;margin-bottom:8px;}
+.revenue-card .rev-amount{font-size:32px;font-weight:800;color:#FF6B6B;line-height:1;margin-bottom:4px;}
+.revenue-card .rev-sub{font-size:11px;opacity:.7;}
+.revenue-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.revenue-row:last-child{border-bottom:none;}
+.revenue-row .rv-label{font-size:12px;opacity:.8;}
+.revenue-row .rv-val{font-size:13px;font-weight:700;}
+
+/* ── ARCHIVE REACTIVATION ──────────────────────────────── */
+.archive-lead{background:var(--card);border-radius:10px;padding:12px;box-shadow:var(--shadow);border-left:3px solid var(--orange);margin-bottom:8px;}
+.archive-lead .al-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.archive-lead .al-name{font-weight:700;font-size:14px;}
+.archive-lead .al-meta{font-size:12px;color:var(--text2);margin-bottom:8px;}
+.archive-lead .al-actions{display:flex;gap:8px;}
+.btn-reactivate{padding:7px 14px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-reactivate:hover{filter:brightness(1.1);}
+.btn-wa-archive{padding:7px 14px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;}
+.archive-empty{text-align:center;padding:32px;color:var(--text2);}
+.archive-empty .ae-icon{font-size:40px;margin-bottom:8px;}
+.archive-empty p{font-size:13px;}
 </style>
 </head>
 <body>
@@ -635,6 +663,30 @@ function isOverdue(rl) {
   return new Date(rl.nextActionDate) < new Date();
 }
 
+// ── 72-hour alert: no contact for 48+ hours (hot lead danger zone)
+function is72hAlert(l) {
+  if (l.status === 'Контракт' || l.status === 'Отказ') return false;
+  const ref = l.lastContact || l.date;
+  if (!ref) return false;
+  const hoursElapsed = (new Date() - new Date(ref)) / (1000 * 3600);
+  return hoursElapsed >= 48;
+}
+
+// ── Lost revenue calculator
+function lostRevenue(leads) {
+  const AVG_CHECK = 11900000; // 11.9M тенге — средний чек по рынку (из SERM+)
+  const refused = leads.filter(l => l.status === 'Отказ').length;
+  const stalled = leads.filter(l => is72hAlert(l)).length;
+  const archive = leads.filter(l => l.status === 'Отказ' && (new Date() - new Date(l.date)) / (1000*3600*24) > 30).length;
+  const potential = Math.round((refused * 0.22 + stalled * 0.40) * AVG_CHECK); // 22% отказов реально покупают, 40% зависших уходят
+  return { refused, stalled, archive, potential };
+}
+
+function fmtMoney(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + ' млн ₸';
+  return n.toLocaleString('ru') + ' ₸';
+}
+
 // ── SIDEBAR CALENDAR
 let sbYear, sbMonth;
 function renderSidebar() {
@@ -770,6 +822,8 @@ function buildNotifications() {
     todayMeetings.forEach(m => {
       notifs.push({type:'green', text:`📅 Сегодня ${m.type}: <strong>${m.client}</strong>${m.time?' в '+m.time:''}`, time:m.time||'Сегодня'});
     });
+    const hot72m = myLeads.filter(l => is72hAlert(l));
+    if (hot72m.length) notifs.push({type:'red', text:`🔥 <strong>${hot72m.length} лидов без контакта 48ч+</strong> — риск потери по правилу 72 часов`, time:'Сейчас'});
     myLeads.filter(l => isOverdue(l) && l.status !== 'Контракт' && l.status !== 'Отказ').forEach(l => {
       notifs.push({type:'red', text:`⏰ Просрочено: <strong>${l.client}</strong> — ${l.nextAction}`, time:'Сейчас'});
     });
@@ -779,12 +833,18 @@ function buildNotifications() {
     myLeads.filter(l => !l.modification && l.status !== 'Отказ').forEach(l => {
       notifs.push({type:'orange', text:`🔧 Не заполнена модификация: <strong>${l.client}</strong>`, time:'Сегодня'});
     });
+    const archivable = myLeads.filter(l => l.status === 'Отказ' && (new Date()-new Date(l.date))/(1000*3600*24) > 30);
+    if (archivable.length) notifs.push({type:'orange', text:`♻️ <strong>${archivable.length} клиентов</strong> в архиве готовы к реактивации`, time:'Сегодня'});
   } else if (role === 'rop') {
     const myDealerLeads = state.leads.filter(l => l.dealer === state.user.dealer);
+    const hot72r = myDealerLeads.filter(l => is72hAlert(l));
+    if (hot72r.length) notifs.push({type:'red', text:`🔥 <strong>${hot72r.length} горящих лидов</strong> без контакта 48ч+ — правило 72 часов`, time:'Сейчас'});
     const stuck = myDealerLeads.filter(l => l.status === 'В работе' && l.lastContact && (new Date() - new Date(l.lastContact)) > 2*24*3600*1000);
     if (stuck.length) notifs.push({type:'red', text:`🔴 ${stuck.length} лидов без активности более 2 дней`, time:'Сегодня'});
     const noContact = myDealerLeads.filter(l => !l.lastContact && l.status === 'Новый');
     if (noContact.length) notifs.push({type:'orange', text:`📞 ${noContact.length} новых лидов без первого контакта`, time:'Сегодня'});
+    const rev = lostRevenue(myDealerLeads);
+    if (rev.potential > 0) notifs.push({type:'orange', text:`💸 Потенциальные потери ДЦ: <strong>${fmtMoney(rev.potential)}</strong>`, time:'Сегодня'});
     notifs.push({type:'blue', text:`📊 Ежедневный отчёт команды готов — конверсия 1.2%`, time:'18:00'});
   } else if (role === 'director') {
     const dcLeads = state.leads.filter(l => l.dealer === state.user.dealer);
@@ -830,7 +890,7 @@ document.addEventListener('click', e => {
 //  RENDER ROUTER
 // ═══════════════════════════════════════════════════════════════
 const ROLE_TABS = {
-  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📅 Календарь', view:'managerCalendar'}, {label:'📊 Мой скоринг', view:'managerScore'}],
+  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📅 Календарь', view:'managerCalendar'}, {label:'📊 Мой скоринг', view:'managerScore'}, {label:'♻️ Архив', view:'managerArchive'}],
   rop:      [{label:'🏠 Главная', view:'ropHome'}, {label:'👥 Менеджеры', view:'ropManagers'}, {label:'📋 Все лиды', view:'ropLeads'}],
   director: [{label:'🏠 ДЦ Обзор', view:'dirHome'}, {label:'👥 Команда', view:'dirTeam'}, {label:'📊 Отчёт', view:'dirReport'}, {label:'📂 CSV', view:'csvUpload'}],
   distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📂 CSV', view:'csvUpload'}],
@@ -870,7 +930,7 @@ function renderApp() {
   const el = document.getElementById('main-content');
   el.innerHTML = '';
   const builders = {
-    managerHome, managerLeads, managerCalendar, managerScore,
+    managerHome, managerLeads, managerCalendar, managerScore, managerArchive,
     ropHome, ropManagers, ropLeads,
     dirHome, dirTeam, dirReport,
     networkHome, networkDealers, networkAnalytics,
@@ -993,6 +1053,30 @@ function managerHome() {
     <div class="stat-card ${score>=70?'green':score>=50?'orange':'red'}"><div class="stat-val">${score}%</div><div class="stat-label">Скоринг РЛ</div></div>
   </div>
 
+  ${(() => {
+    const hot72 = active.filter(l => is72hAlert(l));
+    const archivable = state.leads.filter(l => l.manager === u.name && l.status === 'Отказ' && (new Date()-new Date(l.date))/(1000*3600*24) > 30);
+    return `
+  ${hot72.length ? `
+  <div class="card" style="border:2px solid var(--red);">
+    <div class="card-title" style="color:var(--red);">⏰ Правило 72 часов — ГОРЯЩИЕ лиды (${hot72.length})</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Клиенты без контакта 48+ часов — 40% из них уходят к конкурентам</div>
+    <div class="alert-list">
+      ${hot72.map(l=>{
+        const h = Math.round((new Date()-new Date(l.lastContact||l.date))/(1000*3600));
+        const waPhone = l.phone ? l.phone.replace(/[^0-9]/g,'') : null;
+        const waText = encodeURIComponent(`Здравствуйте, ${l.client}! Мы из Kaiyi. Хотели уточнить, актуален ли для вас вопрос с автомобилем? Готовы предложить лучшие условия!`);
+        return `<div class="alert-item red" style="flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="alert-icon">🔥</div>
+            <div class="alert-text" style="flex:1"><strong>${l.client}</strong><span>${l.model||'Модель не указана'} · Без контакта ${h} ч.</span></div>
+            ${waPhone ? `<a href="https://api.whatsapp.com/send?phone=${waPhone.startsWith('8')&&waPhone.length===11?'7'+waPhone.slice(1):waPhone}&text=${waText}" target="_blank" style="padding:5px 10px;background:#25D366;color:#fff;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;">📲 WA</a>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>` : ''}
+
   ${overdue.length || noOpd.length ? `
   <div class="card">
     <div class="card-title">⚠️ Требуют внимания</div>
@@ -1001,6 +1085,16 @@ function managerHome() {
       ${noOpd.map(l=>`<div class="alert-item orange"><div class="alert-icon">📋</div><div class="alert-text"><strong>${l.client}</strong><span>Нет согласия ОПД — юридический риск</span></div></div>`).join('')}
     </div>
   </div>` : ''}
+
+  ${archivable.length ? `
+  <div class="card" style="border:1px solid var(--orange);">
+    <div class="card-header">
+      <div class="card-title" style="color:var(--orange);">♻️ Архив — готовы вернуться (${archivable.length})</div>
+      <button onclick="switchTab(4)" style="padding:5px 10px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Посмотреть</button>
+    </div>
+    <div style="font-size:12px;color:var(--text2);">Клиенты с отказом 30+ дней назад — многие уже готовы пересмотреть решение</div>
+  </div>` : ''}`;
+  })()}
 
   <div class="card">
     <div class="card-title">📅 Задачи на сегодня</div>
@@ -1097,6 +1191,92 @@ function managerScore() {
       </div>`;
     }).join('')}
   </div>`;
+}
+
+function managerArchive() {
+  const u = state.user;
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now); thirtyDaysAgo.setDate(now.getDate() - 30);
+  const ninetyDaysAgo = new Date(now); ninetyDaysAgo.setDate(now.getDate() - 90);
+
+  // All refused leads for this manager
+  const refused = state.leads.filter(l => l.manager === u.name && l.status === 'Отказ');
+  // Archivable = 30+ days, not too old (90 days cutoff)
+  const archivable = refused.filter(l => {
+    const d = new Date(l.date);
+    return d < thirtyDaysAgo && d > ninetyDaysAgo;
+  });
+  const old = refused.filter(l => new Date(l.date) <= ninetyDaysAgo);
+
+  const waArchiveText = (client, model) =>
+    encodeURIComponent(`Здравствуйте, ${client}! Это ${u.name} из ${u.dealer}.\n\nМы не виделись несколько недель, но хотели сообщить — у нас появилось обновлённое предложение по ${model||'Kaiyi'}.\n\nМожем ли мы назначить короткую встречу или звонок? Буду рад ответить на все вопросы!`);
+
+  return `
+  <div class="section-header">
+    <div>
+      <div class="section-title">♻️ Архив реактивации</div>
+      <div class="section-sub">${archivable.length} клиентов готовы к повторному контакту</div>
+    </div>
+  </div>
+
+  <div class="revenue-card" style="margin-bottom:12px;">
+    <div class="rev-title">💡 Почему это важно (данные SERM+)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+      <div><div style="font-size:22px;font-weight:800;color:#FF6B6B;">${archivable.length}</div><div style="font-size:11px;opacity:.7;">в архиве (30–90 дн.)</div></div>
+      <div><div style="font-size:22px;font-weight:800;color:#FFD93D;">${Math.round(archivable.length * 0.22)}</div><div style="font-size:11px;opacity:.7;">потенциальных сделок</div></div>
+      <div><div style="font-size:22px;font-weight:800;color:#6BCB77;">${fmtMoney(Math.round(archivable.length * 0.22 * 11900000))}</div><div style="font-size:11px;opacity:.7;">возможная выручка</div></div>
+      <div><div style="font-size:22px;font-weight:800;color:#aaa;">22%</div><div style="font-size:11px;opacity:.7;">отказников реально покупают у конкурентов</div></div>
+    </div>
+  </div>
+
+  ${archivable.length === 0 ? `
+  <div class="archive-empty">
+    <div class="ae-icon">✅</div>
+    <p><strong>Архив пуст!</strong></p>
+    <p>Нет клиентов с отказом 30–90 дней назад.</p>
+  </div>` : `
+  <div class="card">
+    <div class="card-title">📬 Клиенты для повторного контакта</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Нажми WA — откроется готовое сообщение с предложением вернуться</div>
+  </div>
+  ${archivable.map(l => {
+    const daysPast = Math.round((now - new Date(l.date)) / (1000*3600*24));
+    const cleanPhone = l.phone ? l.phone.replace(/[^0-9]/g,'') : null;
+    const intPhone = cleanPhone ? (cleanPhone.startsWith('8')&&cleanPhone.length===11?'7'+cleanPhone.slice(1):cleanPhone) : null;
+    return `<div class="archive-lead">
+      <div class="al-header">
+        <span class="al-name">${l.client}</span>
+        <span style="font-size:10px;font-weight:700;color:var(--orange);background:#FFF3E0;padding:2px 7px;border-radius:10px;">${daysPast} дней назад</span>
+      </div>
+      <div class="al-meta">🚗 ${l.model||'—'} · 📣 ${l.source||'—'} · 📅 ${l.date}</div>
+      <div class="al-actions">
+        <button class="btn-reactivate" onclick="reactivateLead('${l.id}')">♻️ В работу</button>
+        ${intPhone ? `<a class="btn-wa-archive" href="https://api.whatsapp.com/send?phone=${intPhone}&text=${waArchiveText(l.client, l.model)}" target="_blank">📲 WA реактивация</a>` : '<span style="font-size:12px;color:var(--text2);">Нет телефона</span>'}
+      </div>
+    </div>`;
+  }).join('')}`}
+
+  ${old.length ? `
+  <div class="card" style="margin-top:8px;">
+    <div class="card-title" style="color:var(--text2);">🗄 Старый архив (90+ дней) — ${old.length} клиентов</div>
+    <div style="font-size:12px;color:var(--text2);">Скорее всего уже купили у конкурентов. Используй как базу для follow-up через год.</div>
+    ${old.slice(0,3).map(l=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><strong>${l.client}</strong> <span class="text-gray">· ${l.model||'—'} · ${l.date}</span></div>`).join('')}
+    ${old.length > 3 ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;">...и ещё ${old.length-3} клиентов</div>` : ''}
+  </div>` : ''}
+  `;
+}
+
+function reactivateLead(id) {
+  const lead = state.leads.find(l => l.id === id);
+  if (!lead) return;
+  lead.status = 'В работе';
+  lead.lastContact = new Date().toISOString().split('T')[0];
+  lead.nextAction = 'Звонок';
+  lead.nextActionDate = new Date(Date.now() + 24*3600*1000).toISOString().split('T')[0];
+  saveLeads();
+  buildNotifications();
+  renderApp();
+  pushNotif('♻️ Реактивация', `${lead.client} возвращён в работу`, 'success');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1312,6 +1492,8 @@ function ropHome() {
   const noContact = dcLeads.filter(l => !l.lastContact && l.status === 'Новый').length;
   const contracts = dcLeads.filter(l => l.status === 'Контракт').length;
   const conv = dcLeads.length ? ((contracts/dcLeads.length)*100).toFixed(1) : '0.0';
+  const hot72 = dcLeads.filter(l => is72hAlert(l));
+  const rev = lostRevenue(dcLeads);
 
   return `
   <div class="section-header">
@@ -1320,9 +1502,35 @@ function ropHome() {
   <div class="stat-grid">
     <div class="stat-card blue"><div class="stat-val">${dcLeads.length}</div><div class="stat-label">Всего лидов</div></div>
     <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
-    <div class="stat-card orange"><div class="stat-val">${stuck}</div><div class="stat-label">Зависших</div></div>
+    <div class="stat-card ${hot72.length>0?'red':'orange'}"><div class="stat-val">${hot72.length}</div><div class="stat-label">Горящих 72ч</div></div>
     <div class="stat-card ${parseFloat(conv)>=2?'green':parseFloat(conv)>=1?'orange':'red'}"><div class="stat-val">${conv}%</div><div class="stat-label">Конверсия</div></div>
   </div>
+
+  ${hot72.length ? `
+  <div class="card" style="border:2px solid var(--red);">
+    <div class="card-title" style="color:var(--red);">⏰ Правило 72 часов — ${hot72.length} лидов в опасной зоне</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">40% без контакта 48ч+ уходят к конкурентам — поставь задачу менеджеру прямо сейчас</div>
+    <div class="alert-list">
+      ${hot72.slice(0,5).map(l=>{
+        const h = Math.round((new Date()-new Date(l.lastContact||l.date))/(1000*3600));
+        return `<div class="alert-item red"><div class="alert-icon">🔥</div><div class="alert-text"><strong>${l.client}</strong><span>${l.manager.split(' ')[0]} · ${l.model||'—'} · Без контакта ${h} ч.</span></div></div>`;
+      }).join('')}
+      ${hot72.length > 5 ? `<div style="font-size:12px;color:var(--text2);padding:6px;">...и ещё ${hot72.length-5}</div>` : ''}
+    </div>
+  </div>` : ''}
+
+  <div class="revenue-card">
+    <div class="rev-title">💸 Калькулятор потерь</div>
+    <div class="rev-amount">${fmtMoney(rev.potential)}</div>
+    <div class="rev-sub">потенциальных потерь по ${u.dealer}</div>
+    <div style="margin-top:10px;">
+      <div class="revenue-row"><span class="rv-label">🔴 Горящих лидов (48ч+)</span><span class="rv-val" style="color:#FF6B6B;">${rev.stalled} лидов</span></div>
+      <div class="revenue-row"><span class="rv-label">❌ Отказов в архиве</span><span class="rv-val" style="color:#FF6B6B;">${rev.refused}</span></div>
+      <div class="revenue-row"><span class="rv-label">📦 Для реактивации</span><span class="rv-val" style="color:#FFD93D;">${rev.archive}</span></div>
+      <div class="revenue-row"><span class="rv-label">💰 Средний чек</span><span class="rv-val" style="color:#6BCB77;">11.9 млн ₸</span></div>
+    </div>
+  </div>
+
   ${noContact ? `<div class="card"><div class="alert-list"><div class="alert-item red"><div class="alert-icon">📞</div><div class="alert-text"><strong>${noContact} новых лидов без первого контакта</strong><span>Нужно срочно назначить менеджера</span></div></div></div></div>` : ''}
   <div class="card">
     <div class="card-title">📊 Воронка команды</div>
@@ -1416,6 +1624,9 @@ function dirHome() {
   const avgSc = avgScore(dcLeads);
   const conv = dcLeads.length ? ((contracts/dcLeads.length)*100).toFixed(1) : '0.0';
 
+  const hot72 = dcLeads.filter(l => is72hAlert(l));
+  const rev = lostRevenue(dcLeads);
+
   return `
   <div class="section-header">
     <div><div class="section-title">${u.dealer}</div><div class="section-sub">Директор · ${new Date().toLocaleDateString('ru',{day:'numeric',month:'long'})}</div></div>
@@ -1423,9 +1634,22 @@ function dirHome() {
   <div class="stat-grid">
     <div class="stat-card blue"><div class="stat-val">${dcLeads.length}</div><div class="stat-label">Лидов всего</div></div>
     <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
-    <div class="stat-card orange"><div class="stat-val">${stuck}</div><div class="stat-label">Яма "Коммент."</div></div>
+    <div class="stat-card ${hot72.length>0?'red':'orange'}"><div class="stat-val">${hot72.length}</div><div class="stat-label">Горящих 72ч</div></div>
     <div class="stat-card ${avgSc>=70?'green':avgSc>=50?'orange':'red'}"><div class="stat-val">${avgSc}%</div><div class="stat-label">Скоринг РЛ</div></div>
   </div>
+
+  <div class="revenue-card">
+    <div class="rev-title">💸 Потенциальные потери ДЦ</div>
+    <div class="rev-amount">${fmtMoney(rev.potential)}</div>
+    <div class="rev-sub">оценочные потери от горящих лидов и архива</div>
+    <div style="margin-top:10px;">
+      <div class="revenue-row"><span class="rv-label">🔥 Горящих лидов (48ч+)</span><span class="rv-val" style="color:#FF6B6B;">${rev.stalled}</span></div>
+      <div class="revenue-row"><span class="rv-label">❌ Отказов</span><span class="rv-val" style="color:#FF6B6B;">${rev.refused}</span></div>
+      <div class="revenue-row"><span class="rv-label">♻️ Реактивируемых</span><span class="rv-val" style="color:#FFD93D;">${rev.archive}</span></div>
+      <div class="revenue-row"><span class="rv-label">💰 Средний чек (рынок)</span><span class="rv-val" style="color:#6BCB77;">11.9 млн ₸</span></div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title">📊 Воронка ДЦ</div>
     <div class="funnel" id="dir-funnel"></div>
@@ -1511,8 +1735,9 @@ function networkHome() {
   dealers.sort((a,b) => b.score - a.score);
   const total = all.length;
   const contracts = all.filter(l => l.status === 'Контракт').length;
-  const stuck = all.filter(l => l.status === 'В работе').length;
+  const hot72net = all.filter(l => is72hAlert(l)).length;
   const avgSc = avgScore(all);
+  const rev = lostRevenue(all);
 
   return `
   <div class="section-header">
@@ -1521,8 +1746,20 @@ function networkHome() {
   <div class="stat-grid">
     <div class="stat-card blue"><div class="stat-val">${total}</div><div class="stat-label">Лидов в сети</div></div>
     <div class="stat-card green"><div class="stat-val">${contracts}</div><div class="stat-label">Контракты</div></div>
-    <div class="stat-card orange"><div class="stat-val">${stuck}</div><div class="stat-label">Зависших</div></div>
+    <div class="stat-card ${hot72net>0?'red':'orange'}"><div class="stat-val">${hot72net}</div><div class="stat-label">Горящих 72ч</div></div>
     <div class="stat-card ${avgSc>=70?'green':avgSc>=50?'orange':'red'}"><div class="stat-val">${avgSc}%</div><div class="stat-label">Скоринг сети</div></div>
+  </div>
+
+  <div class="revenue-card">
+    <div class="rev-title">💸 Потенциальные потери по всей сети</div>
+    <div class="rev-amount">${fmtMoney(rev.potential)}</div>
+    <div class="rev-sub">оценочные потери от ${rev.stalled} горящих лидов и ${rev.refused} отказов</div>
+    <div style="margin-top:10px;">
+      <div class="revenue-row"><span class="rv-label">🔥 Горящих лидов сети</span><span class="rv-val" style="color:#FF6B6B;">${rev.stalled}</span></div>
+      <div class="revenue-row"><span class="rv-label">❌ Всего отказов</span><span class="rv-val" style="color:#FF6B6B;">${rev.refused}</span></div>
+      <div class="revenue-row"><span class="rv-label">♻️ Для реактивации (30д+)</span><span class="rv-val" style="color:#FFD93D;">${rev.archive}</span></div>
+      <div class="revenue-row"><span class="rv-label">💰 Ср. чек по рынку KZ</span><span class="rv-val" style="color:#6BCB77;">11.9 млн ₸</span></div>
+    </div>
   </div>
   <div class="card">
     <div class="card-title">📊 Воронка по всей сети</div>
