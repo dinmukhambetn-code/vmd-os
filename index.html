@@ -724,7 +724,7 @@ function changeStatus(id, newStatus) {
   buildNotifications();
   renderSidebar();
   renderApp();
-  showToast(`✅ ${lead.client} → ${newStatus}`);
+  pushNotif('Статус обновлён', `${lead.client} → ${newStatus}`, newStatus==='Контракт'?'success':newStatus==='Отказ'?'error':'info');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1276,9 +1276,10 @@ function saveMeeting(sendWA) {
 
   closeMeetingModal();
   buildNotifications();
+  scheduleMeetingReminders();
   renderSidebar();
   renderApp();
-  showToast(`✅ ${type} с ${client} на ${fmtDate||date}`, 'green');
+  pushNotif('📅 Встреча создана', `${type} с ${client} — ${fmtDate||date}${time?' в '+time:''}`, 'success');
 }
 function showDayEvents(dateStr) {
   const u = state.user;
@@ -1806,33 +1807,116 @@ function initCharts() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  AUTO-REFRESH SIMULATION (every 10 min shows toast)
+//  NOTIFICATIONS + TOAST
 // ═══════════════════════════════════════════════════════════════
 function showToast(msg, type='blue') {
+  const colors = { green:'#2E7D32', red:'#D32F2F', orange:'#E65100', blue:'#1565C0' };
   const t = document.createElement('div');
-  t.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:${type==='green'?'#2E7D32':type==='red'?'#D32F2F':'#1565C0'};color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2);`;
+  t.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:${colors[type]||colors.blue};color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:90vw;text-align:center;`;
   t.textContent = msg;
   document.body.appendChild(t);
+  setTimeout(() => t.style.opacity='0', 2700);
   setTimeout(() => t.remove(), 3000);
 }
 
-// Simulate new lead notification after 15 seconds
-setTimeout(() => {
-  if (state.user) {
-    state.notifications.unshift({type:'green', text:'🆕 Новый рабочий лист создан в DNM: <strong>Бауыржан Тəуекел</strong> — Kaiyi Astana', time:'Только что'});
-    document.getElementById('notif-count').textContent = state.notifications.length;
-    showToast('🆕 Новый РЛ создан в DNM — Kaiyi Astana', 'green');
+// ── Browser push notification
+function askNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
   }
-}, 15000);
+}
 
-// Simulate 10-min sync
+function pushNotif(title, body, type='info') {
+  // Always show in-app toast
+  const toastType = type==='warning'?'orange':type==='success'?'green':type==='error'?'red':'blue';
+  showToast(`${title}: ${body}`, toastType);
+
+  // Add to bell
+  if (state.user) {
+    const typeMap = { warning:'orange', success:'green', error:'red', info:'blue' };
+    state.notifications.unshift({ type: typeMap[type]||'blue', text: `<strong>${title}</strong> — ${body}`, time:'Только что' });
+    const el = document.getElementById('notif-count');
+    if (el) el.textContent = state.notifications.length;
+  }
+
+  // System notification (if permission granted)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body,
+        icon: '/vmd-os/icon-192.png',
+        badge: '/vmd-os/icon-192.png',
+        vibrate: [200, 100, 200],
+      });
+    } catch(e){}
+  }
+}
+
+// ── Schedule meeting reminders (fires 15 min before)
+const _scheduledReminders = new Set();
+function scheduleMeetingReminders() {
+  if (!state.user || !state.meetings) return;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+
+  state.meetings
+    .filter(m => m.manager === state.user.name && m.date === todayStr && m.time)
+    .forEach(m => {
+      const key = m.id + '_remind';
+      if (_scheduledReminders.has(key)) return;
+      const [h, min] = m.time.split(':').map(Number);
+      const meetTime = new Date();
+      meetTime.setHours(h, min, 0, 0);
+      const remindTime = new Date(meetTime.getTime() - 15 * 60 * 1000); // 15 min before
+      const msUntil = remindTime.getTime() - now.getTime();
+
+      if (msUntil > 0) {
+        _scheduledReminders.add(key);
+        setTimeout(() => {
+          pushNotif(
+            '⏰ Встреча через 15 минут',
+            `${m.client} — ${m.type} в ${m.time}`,
+            'warning'
+          );
+        }, msUntil);
+      }
+
+      // Also remind exactly at meeting time
+      const key2 = m.id + '_now';
+      if (!_scheduledReminders.has(key2)) {
+        const msUntilMeet = meetTime.getTime() - now.getTime();
+        if (msUntilMeet > 0) {
+          _scheduledReminders.add(key2);
+          setTimeout(() => {
+            pushNotif('🤝 Встреча сейчас!', `${m.client} — ${m.type}`, 'error');
+          }, msUntilMeet);
+        }
+      }
+    });
+}
+
+// ── Check overdue tasks every minute
 setInterval(() => {
-  if (state.user) showToast('🔄 Данные обновлены из DNM');
+  if (!state.user || state.user.role !== 'manager') return;
+  const myLeads = state.leads.filter(l => l.manager === state.user.name);
+  const overdue = myLeads.filter(l => isOverdue(l) && l.status !== 'Контракт' && l.status !== 'Отказ');
+  if (overdue.length) {
+    pushNotif('⚠️ Просроченные задачи', `${overdue.length} лидов требуют внимания`, 'warning');
+  }
+}, 60000);
+
+// ── Simulate 10-min sync
+setInterval(() => {
+  if (state.user) {
+    pushNotif('🔄 Синхронизация', 'Данные обновлены из DNM', 'info');
+  }
 }, 600000);
 
 // ── Auto-restore session on load
 window.addEventListener('DOMContentLoaded', () => {
   restoreSession();
+  setTimeout(askNotifPermission, 2000);
+  setTimeout(scheduleMeetingReminders, 3000);
 });
 
 // ── PWA Service Worker
