@@ -64,8 +64,95 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nav-tab{flex-shrink:0;padding:12px 16px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
 .nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
 
+/* ── APP BODY + SIDEBAR ────────────────────────────────── */
+.app-body{display:flex;flex:1;min-height:0;}
+.sidebar{width:240px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:14px;overflow-y:auto;position:sticky;top:56px;height:calc(100vh - 56px);}
+.sidebar-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.sb-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sb-cal-month{font-size:13px;font-weight:700;color:var(--text);}
+.sb-cal-nav{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;}
+.sb-cal-nav:hover{background:var(--bg);}
+.sb-grid-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px;}
+.sb-day-name{text-align:center;font-size:9px;font-weight:600;color:var(--text2);padding:2px 0;}
+.sb-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.sb-cell{height:28px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:500;transition:background .15s;position:relative;}
+.sb-cell:not(.empty):hover{background:var(--bg);}
+.sb-cell.today{background:var(--blue);color:#fff;font-weight:700;}
+.sb-cell.has-event::after{content:'';position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--orange);}
+.sb-cell.today.has-event::after{background:#fff;}
+.sb-cell.empty{cursor:default;}
+.sb-cell.other-month{color:var(--border);}
+.sb-divider{height:1px;background:var(--border);margin:12px 0;}
+.sb-event{padding:7px 8px;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .15s;}
+.sb-event:hover{background:var(--bg);}
+.sb-event-type{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;}
+.sb-event-client{font-size:12px;font-weight:600;color:var(--text);margin-top:1px;}
+.sb-event-time{font-size:10px;color:var(--text2);}
+.sb-event.today-ev{background:#EBF5FF;border-left:3px solid var(--blue);}
+.sb-event.overdue-ev{background:#FFF0F0;border-left:3px solid var(--red);}
+.sb-add-btn{width:100%;padding:8px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;}
+.sb-add-btn:hover{background:var(--blue2);}
+.sb-ev-row{display:flex;align-items:flex-start;gap:8px;}
+.sb-ev-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.sb-ev-info{flex:1;min-width:0;}
+.sb-ev-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.sb-ev-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:10px;}
+.type-tag{background:rgba(21,101,192,.12);color:var(--blue);}
+.time-tag{background:rgba(0,200,83,.12);color:var(--green2);}
+.date-tag{background:var(--bg);color:var(--text2);}
+.sb-wa{padding:4px 8px;background:#25D366;color:#fff;border-radius:12px;font-size:9px;font-weight:700;text-decoration:none;flex-shrink:0;margin-top:2px;}
+.sb-wa:hover{background:#1da851;}
+/* ── BOTTOM NAV (mobile only) ──────────────────────────── */
+.bottom-nav{display:none;}
+@media(max-width:640px){
+  /* Hide top nav tabs on mobile — use bottom nav instead */
+  .nav-tabs{display:none;}
+
+  /* Bottom navigation bar */
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--card);border-top:1px solid var(--border);
+    z-index:150;height:60px;box-shadow:0 -2px 12px rgba(0,0,0,.08);
+  }
+  .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:none;color:var(--text2);font-size:9px;font-weight:600;padding:6px 2px;transition:color .2s;}
+  .bn-item.active{color:var(--blue);}
+  .bn-icon{font-size:20px;line-height:1;}
+  .bn-item.active .bn-icon{transform:scale(1.1);}
+
+  /* Sidebar becomes a slide-up drawer */
+  .sidebar{
+    position:fixed;bottom:60px;left:0;right:0;
+    width:100%;max-height:70vh;overflow-y:auto;
+    background:var(--card);border-top:1px solid var(--border);
+    border-right:none;padding:14px;
+    transform:translateY(100%);transition:transform .3s ease;
+    z-index:140;box-shadow:0 -4px 20px rgba(0,0,0,.12);
+    border-radius:20px 20px 0 0;
+  }
+  .sidebar.open{transform:translateY(0);}
+  .sidebar-drag{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px;}
+
+  /* Cal toggle button in topbar */
+  .cal-toggle-btn{display:flex;}
+
+  /* Main content padding for bottom nav */
+  .main{padding-bottom:76px;}
+  .app-body{flex-direction:column;}
+
+  /* Bigger touch targets */
+  .status-btn{padding:7px 12px;font-size:12px;}
+  .lead-item{padding:14px;}
+  .nav-tab{padding:14px 16px;}
+  .sb-grid .sb-cell{height:30px;font-size:11px;}
+
+  /* Full-width cards */
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+}
+/* Hide cal-toggle on desktop */
+.cal-toggle-btn{display:none;background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px;}
+
 /* ── MAIN CONTENT ──────────────────────────────────────── */
-.main{flex:1;padding:16px;max-width:900px;margin:0 auto;width:100%;}
+.main{flex:1;padding:16px;max-width:860px;width:100%;overflow-x:hidden;}
 
 /* ── CARDS ─────────────────────────────────────────────── */
 .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px;}
@@ -98,6 +185,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 /* ── FILTER BAR ────────────────────────────────────────── */
 .filter-bar{display:flex;gap:8px;margin-bottom:10px;}
+
+/* ── CALENDAR ──────────────────────────────────────────── */
+.cal-header{display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.cal-month{font-size:15px;font-weight:700;color:var(--text);}
+.cal-grid-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.cal-day-name{text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:4px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-cell{min-height:38px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s;position:relative;}
+.cal-cell:not(.empty):hover{background:var(--bg);}
+.cal-cell.today{background:var(--blue);color:#fff;font-weight:700;}
+.cal-cell.today .cal-dot{background:#fff;}
+.cal-cell.empty{cursor:default;}
+.cal-dot{width:5px;height:5px;border-radius:50%;background:var(--orange);position:absolute;bottom:4px;}
+
+/* ── EVENTS ────────────────────────────────────────────── */
+.event-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.event-item:last-child{border-bottom:none;}
+.event-item.overdue{background:#fff5f5;border-radius:8px;padding:10px;margin-bottom:4px;}
+.event-item.today-event{background:#f0f7ff;border-radius:8px;padding:10px;margin-bottom:4px;}
+.event-icon{font-size:20px;flex-shrink:0;}
+.event-body{flex:1;min-width:0;}
+.event-client{font-weight:600;font-size:13px;}
+.event-meta{font-size:12px;color:var(--text2);margin-top:2px;}
+.wa-btn{padding:5px 10px;background:var(--blue);color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;flex-shrink:0;transition:background .15s;}
+.wa-btn:hover{background:var(--blue2);}
+.wa-btn.green{background:#25D366;}
+.wa-btn.green:hover{background:#1da851;}
+.btn-add-meeting{padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
 .filter-bar select{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);outline:none;}
 .filter-bar select:focus{border-color:var(--blue);}
 
@@ -282,6 +397,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <span class="role-badge" id="role-badge">—</span>
     </div>
     <div class="topbar-right">
+      <button class="cal-toggle-btn" id="cal-toggle-btn" onclick="toggleMobileSidebar()" title="Календарь">📅</button>
       <button class="notif-btn" onclick="toggleNotif()">
         🔔
         <span class="notif-count" id="notif-count">0</span>
@@ -290,7 +406,79 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
   <div class="nav-tabs" id="nav-tabs"></div>
-  <div class="main" id="main-content"></div>
+  <div class="app-body">
+    <div class="sidebar" id="sidebar" style="display:none;">
+      <div class="sidebar-drag"></div>
+      <div class="sidebar-cal" id="sidebar-cal"></div>
+    </div>
+    <div class="main" id="main-content"></div>
+  </div>
+  <!-- Bottom Navigation (mobile) -->
+  <nav class="bottom-nav" id="bottom-nav"></nav>
+</div>
+
+<!-- ═══════════════════ MEETING MODAL (always in DOM) ═══════════ -->
+<div id="meeting-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:700;">📅 Назначить встречу / звонок</div>
+      <button onclick="closeMeetingModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1;">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Клиент</label>
+      <select id="meet-lead" onchange="fillMeetingPhone()">
+        <option value="">— Выбрать из лидов —</option>
+        <option value="__new__">+ Новый клиент</option>
+      </select>
+    </div>
+    <div class="form-group" id="meet-name-wrap" style="display:none;">
+      <label>Имя клиента</label>
+      <input id="meet-name" type="text" placeholder="Имя клиента">
+    </div>
+    <div class="form-group">
+      <label>Номер телефона</label>
+      <input id="meet-phone" type="tel" placeholder="+7 700 000 0000">
+    </div>
+    <div class="form-group">
+      <label>Тип встречи</label>
+      <select id="meet-type">
+        <option>📞 Звонок</option>
+        <option>🤝 Встреча</option>
+        <option>🚗 Тест-драйв</option>
+        <option>📄 КП</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-group" style="flex:1;">
+        <label>Дата</label>
+        <input id="meet-date" type="date">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Время</label>
+        <input id="meet-time" type="time" value="10:00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Заметка</label>
+      <input id="meet-note" type="text" placeholder="Необязательно">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button onclick="saveMeeting(false)" style="flex:1;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">💾 Сохранить</button>
+      <button onclick="saveMeeting(true)" style="flex:1;padding:12px;background:#25D366;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">📲 Сохранить + WA</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DAY MODAL ══════════════════════════════ -->
+<div id="day-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div id="day-modal-title" style="font-size:16px;font-weight:700;"></div>
+      <button onclick="document.getElementById('day-modal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);line-height:1;">✕</button>
+    </div>
+    <div id="day-modal-body"></div>
+    <button onclick="openMeetingModal()" style="width:100%;margin-top:12px;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;">+ Добавить на этот день</button>
+  </div>
 </div>
 
 <!-- ═══════════════════ NOTIFICATIONS PANEL ═══════════════════ -->
@@ -389,6 +577,12 @@ function loadLeads() {
     if (d) state.leads = JSON.parse(d);
   } catch(e){}
 }
+function loadMeetings() {
+  try {
+    const d = localStorage.getItem('vmd_meetings');
+    if (d) state.meetings = JSON.parse(d);
+  } catch(e){}
+}
 function saveSession(login) {
   try { localStorage.setItem('vmd_session', login); } catch(e){}
 }
@@ -408,6 +602,7 @@ function restoreSession() {
   return false;
 }
 loadLeads();
+loadMeetings();
 
 // ═══════════════════════════════════════════════════════════════
 //  SCORING
@@ -443,6 +638,86 @@ function isOverdue(rl) {
   return new Date(rl.nextActionDate) < new Date();
 }
 
+// ── SIDEBAR CALENDAR
+let sbYear, sbMonth;
+function renderSidebar() {
+  const role = state.user ? state.user.role : null;
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  if (role !== 'manager' && role !== 'rop') { sidebar.style.display = 'none'; return; }
+  sidebar.style.display = 'block';
+
+  const today = new Date();
+  if (sbYear === undefined) { sbYear = today.getFullYear(); sbMonth = today.getMonth(); }
+  const todayStr = today.toISOString().split('T')[0];
+  const u = state.user;
+  const myLeads = state.leads.filter(l => l.manager === u.name);
+  const meetings = (state.meetings||[]).filter(m => m.manager === u.name);
+  const leadEvents = myLeads.filter(l => l.nextActionDate).map(l => ({ date: l.nextActionDate, type: l.nextAction||'Звонок', client: l.client, phone: l.phone||'', time: '' }));
+  const allEvents = [...meetings.map(m => ({ date: m.date, type: m.type, client: m.client, phone: m.phone||'', time: m.time||'' })), ...leadEvents];
+
+  const eventDates = new Set(allEvents.map(e => e.date));
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+  const firstDay = new Date(sbYear, sbMonth, 1).getDay();
+  const daysInMonth = new Date(sbYear, sbMonth+1, 0).getDate();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+  let cells = '';
+  for (let i = 0; i < startOffset; i++) cells += `<div class="sb-cell empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${sbYear}-${String(sbMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = ds === todayStr;
+    const hasEv = eventDates.has(ds);
+    cells += `<div class="sb-cell ${isToday?'today':''} ${hasEv?'has-event':''}" onclick="showDayEvents('${ds}')" title="${ds}">${d}</div>`;
+  }
+
+  // Today + upcoming events
+  const todayEv = allEvents.filter(e => e.date === todayStr);
+  const upEv = allEvents.filter(e => e.date > todayStr).sort((a,b) => a.date.localeCompare(b.date)).slice(0,4);
+  const overdueEv = allEvents.filter(e => e.date < todayStr).slice(-2);
+
+  const typeIcon = t => t==='Встреча'?'🤝':t==='Тест-драйв'?'🚗':t==='КП'?'📄':'📞';
+
+  const evHtml = ev => `<div class="sb-event ${ev._type}" onclick="showDayEvents('${ev.date}')">
+    <div class="sb-ev-row">
+      <span class="sb-ev-icon">${typeIcon(ev.type)}</span>
+      <div class="sb-ev-info">
+        <div class="sb-event-client">${ev.client}</div>
+        <div class="sb-ev-tags">
+          <span class="sb-ev-tag type-tag">${ev.type}</span>
+          ${ev.time?`<span class="sb-ev-tag time-tag">🕐 ${ev.time}</span>`:''}
+          <span class="sb-ev-tag date-tag">${ev._type==='today-ev'?'Сегодня':ev._type==='overdue-ev'?'⚠️ Просрочено':ev.date}</span>
+        </div>
+      </div>
+      ${ev.phone?`<a class="sb-wa" href="https://wa.me/${(p=>p.startsWith('8')&&p.length===11?'7'+p.slice(1):p)(ev.phone.replace(/[^0-9]/g,''))}" target="_blank" onclick="event.stopPropagation()">WA</a>`:''}
+    </div>
+  </div>`;
+
+  document.getElementById('sidebar-cal').innerHTML = `
+    <div class="sidebar-title">📅 Календарь</div>
+    <div class="sb-cal-header">
+      <button class="sb-cal-nav" onclick="sbNav(-1)">‹</button>
+      <span class="sb-cal-month">${monthNames[sbMonth]} ${sbYear}</span>
+      <button class="sb-cal-nav" onclick="sbNav(1)">›</button>
+    </div>
+    <div class="sb-grid-days">${dayNames.map(d=>`<div class="sb-day-name">${d}</div>`).join('')}</div>
+    <div class="sb-grid">${cells}</div>
+    <button class="sb-add-btn" onclick="openMeetingModal()">+ Назначить встречу</button>
+    ${overdueEv.length||todayEv.length||upEv.length ? `<div class="sb-divider"></div>` : ''}
+    ${overdueEv.map(e => evHtml({...e,_type:'overdue-ev'})).join('')}
+    ${todayEv.map(e => evHtml({...e,_type:'today-ev'})).join('')}
+    ${upEv.map(e => evHtml({...e,_type:''})).join('')}
+  `;
+}
+function sbNav(dir) {
+  sbMonth += dir;
+  if (sbMonth < 0) { sbMonth = 11; sbYear--; }
+  if (sbMonth > 11) { sbMonth = 0; sbYear++; }
+  renderSidebar();
+}
+
 function changeStatus(id, newStatus) {
   const lead = state.leads.find(l => l.id === id);
   if (!lead) return;
@@ -450,6 +725,7 @@ function changeStatus(id, newStatus) {
   lead.lastContact = new Date().toISOString().split('T')[0];
   saveLeads();
   buildNotifications();
+  renderSidebar();
   renderApp();
   showToast(`✅ ${lead.client} → ${newStatus}`);
 }
@@ -470,6 +746,7 @@ function doLogin() {
   document.getElementById('role-badge').textContent = ROLE_LABELS[u.role];
   document.getElementById('user-avatar').textContent = u.name[0];
   buildNotifications();
+  renderSidebar();
   renderApp();
 }
 
@@ -491,6 +768,11 @@ function buildNotifications() {
   const myLeads = state.leads.filter(l => l.manager === state.user.name);
 
   if (role === 'manager') {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayMeetings = (state.meetings||[]).filter(m => m.manager === state.user.name && m.date === todayStr);
+    todayMeetings.forEach(m => {
+      notifs.push({type:'green', text:`📅 Сегодня ${m.type}: <strong>${m.client}</strong>${m.time?' в '+m.time:''}`, time:m.time||'Сегодня'});
+    });
     myLeads.filter(l => isOverdue(l) && l.status !== 'Контракт' && l.status !== 'Отказ').forEach(l => {
       notifs.push({type:'red', text:`⏰ Просрочено: <strong>${l.client}</strong> — ${l.nextAction}`, time:'Сейчас'});
     });
@@ -551,7 +833,7 @@ document.addEventListener('click', e => {
 //  RENDER ROUTER
 // ═══════════════════════════════════════════════════════════════
 const ROLE_TABS = {
-  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📊 Мой скоринг', view:'managerScore'}],
+  manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📅 Календарь', view:'managerCalendar'}, {label:'📊 Мой скоринг', view:'managerScore'}],
   rop:      [{label:'🏠 Главная', view:'ropHome'}, {label:'👥 Менеджеры', view:'ropManagers'}, {label:'📋 Все лиды', view:'ropLeads'}],
   director: [{label:'🏠 ДЦ Обзор', view:'dirHome'}, {label:'👥 Команда', view:'dirTeam'}, {label:'📊 Отчёт', view:'dirReport'}, {label:'📂 CSV', view:'csvUpload'}],
   distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📂 CSV', view:'csvUpload'}],
@@ -561,16 +843,37 @@ const ROLE_TABS = {
 function renderApp() {
   const role = state.user.role;
   const tabs = ROLE_TABS[role];
+
+  // Desktop top nav
   const navEl = document.getElementById('nav-tabs');
   navEl.innerHTML = tabs.map((t,i) =>
     `<div class="nav-tab ${i===state.currentTab?'active':''}" onclick="switchTab(${i})">${t.label}</div>`
   ).join('');
+
+  // Mobile bottom nav
+  const bnEl = document.getElementById('bottom-nav');
+  if (bnEl) {
+    bnEl.innerHTML = tabs.map((t,i) => {
+      const parts = t.label.split(' ');
+      const icon = parts[0];
+      const txt = parts.slice(1).join(' ') || t.label;
+      return `<button class="bn-item ${i===state.currentTab?'active':''}" onclick="switchTab(${i})">
+        <span class="bn-icon">${icon}</span>
+        <span>${txt}</span>
+      </button>`;
+    }).join('');
+  }
+
+  // Show/hide calendar toggle in topbar (only for manager)
+  const calBtn = document.getElementById('cal-toggle-btn');
+  if (calBtn) calBtn.style.display = (role === 'manager' || role === 'rop') ? 'flex' : 'none';
+
   destroyCharts();
   const view = tabs[state.currentTab].view;
   const el = document.getElementById('main-content');
   el.innerHTML = '';
   const builders = {
-    managerHome, managerLeads, managerScore,
+    managerHome, managerLeads, managerCalendar, managerScore,
     ropHome, ropManagers, ropLeads,
     dirHome, dirTeam, dirReport,
     networkHome, networkDealers, networkAnalytics,
@@ -580,6 +883,21 @@ function renderApp() {
   else el.innerHTML = '<div class="card">Раздел в разработке</div>';
   setTimeout(initCharts, 100);
 }
+
+function toggleMobileSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (!sb) return;
+  sb.classList.toggle('open');
+}
+
+// Close sidebar when tapping outside
+document.addEventListener('click', e => {
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('cal-toggle-btn');
+  if (sb && sb.classList.contains('open') && !sb.contains(e.target) && btn && !btn.contains(e.target)) {
+    sb.classList.remove('open');
+  }
+});
 
 function switchTab(i) {
   state.currentTab = i;
@@ -782,6 +1100,207 @@ function managerScore() {
       </div>`;
     }).join('')}
   </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MANAGER CALENDAR
+// ═══════════════════════════════════════════════════════════════
+function managerCalendar() {
+  const u = state.user;
+  const myLeads = state.leads.filter(l => l.manager === u.name && l.status !== 'Отказ' && l.status !== 'Контракт');
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  // Build meetings from leads nextActionDate
+  const meetings = state.meetings || [];
+  const leadTasks = myLeads
+    .filter(l => l.nextActionDate)
+    .map(l => ({ id:'lead_'+l.id, date: l.nextActionDate, time:'', type: l.nextAction||'Звонок', client: l.client, phone: l.phone||'', leadId: l.id, fromLead: true }));
+
+  const allEvents = [...meetings.filter(m => m.manager === u.name), ...leadTasks];
+  allEvents.sort((a,b) => a.date.localeCompare(b.date));
+
+  const todayEvents = allEvents.filter(e => e.date === todayStr);
+  const upcomingEvents = allEvents.filter(e => e.date > todayStr).slice(0, 10);
+  const overdueEvents = allEvents.filter(e => e.date < todayStr);
+
+  // Calendar grid for current month
+  const year = today.getFullYear(), month = today.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+  const eventDates = new Set(allEvents.map(e => e.date));
+
+  let calCells = '';
+  for (let i = 0; i < startOffset; i++) calCells += `<div class="cal-cell empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = ds === todayStr;
+    const hasDot = eventDates.has(ds);
+    calCells += `<div class="cal-cell ${isToday?'today':''}" onclick="showDayEvents('${ds}')">
+      <span>${d}</span>
+      ${hasDot ? '<div class="cal-dot"></div>' : ''}
+    </div>`;
+  }
+
+  const typeIcon = t => t==='Встреча'?'🤝':t==='Тест-драйв'?'🚗':t==='КП'?'📄':'📞';
+
+  return `
+  <div class="section-header">
+    <div class="section-title">📅 Мой календарь</div>
+    <button class="btn-add-meeting" onclick="openMeetingModal()">+ Встреча</button>
+  </div>
+
+  <div class="card">
+    <div class="cal-header">
+      <span class="cal-month">${monthNames[month]} ${year}</span>
+    </div>
+    <div class="cal-grid-days">${dayNames.map(d=>`<div class="cal-day-name">${d}</div>`).join('')}</div>
+    <div class="cal-grid">${calCells}</div>
+  </div>
+
+  ${overdueEvents.length ? `
+  <div class="card">
+    <div class="card-title" style="color:var(--red);">⚠️ Просрочено (${overdueEvents.length})</div>
+    ${overdueEvents.map(e=>`
+    <div class="event-item overdue">
+      <div class="event-icon">${typeIcon(e.type)}</div>
+      <div class="event-body">
+        <div class="event-client">${e.client}</div>
+        <div class="event-meta">${e.type} · ${e.date}${e.time?' · '+e.time:''}</div>
+      </div>
+      ${e.phone ? `<a class="wa-btn" href="https://wa.me/${(p=>p.startsWith('8')&&p.length===11?'7'+p.slice(1):p)(e.phone.replace(/[^0-9]/g,''))}" target="_blank">WA</a>` : ''}
+    </div>`).join('')}
+  </div>` : ''}
+
+  <div class="card">
+    <div class="card-title">📌 Сегодня${todayEvents.length?' ('+todayEvents.length+')':' — нет задач'}</div>
+    ${todayEvents.length ? todayEvents.map(e=>`
+    <div class="event-item today-event">
+      <div class="event-icon">${typeIcon(e.type)}</div>
+      <div class="event-body">
+        <div class="event-client">${e.client}</div>
+        <div class="event-meta">${e.type}${e.time?' · '+e.time:''}</div>
+      </div>
+      ${e.phone ? `<a class="wa-btn green" href="https://wa.me/${(p=>p.startsWith('8')&&p.length===11?'7'+p.slice(1):p)(e.phone.replace(/[^0-9]/g,''))}" target="_blank">WA</a>` : ''}
+    </div>`).join('') : '<div style="color:var(--text2);font-size:13px;padding:8px 0;">Свободный день 🎉</div>'}
+  </div>
+
+  ${upcomingEvents.length ? `
+  <div class="card">
+    <div class="card-title">🗓 Предстоящие</div>
+    ${upcomingEvents.map(e=>`
+    <div class="event-item">
+      <div class="event-icon">${typeIcon(e.type)}</div>
+      <div class="event-body">
+        <div class="event-client">${e.client}</div>
+        <div class="event-meta">${e.type} · ${e.date}${e.time?' · '+e.time:''}</div>
+      </div>
+      ${e.phone ? `<a class="wa-btn" href="https://wa.me/${(p=>p.startsWith('8')&&p.length===11?'7'+p.slice(1):p)(e.phone.replace(/[^0-9]/g,''))}" target="_blank">WA</a>` : ''}
+    </div>`).join('')}
+  </div>` : ''}
+
+  `;
+}
+
+function openMeetingModal() {
+  // Populate leads dropdown dynamically
+  const myLeads = state.leads.filter(l => l.manager === state.user.name && l.status !== 'Отказ' && l.status !== 'Контракт');
+  const sel = document.getElementById('meet-lead');
+  sel.innerHTML = `<option value="">— Выбрать из лидов —</option>
+    ${myLeads.map(l=>`<option value="${l.id}" data-phone="${l.phone||''}" data-client="${l.client}">${l.client}</option>`).join('')}
+    <option value="__new__">+ Новый клиент</option>`;
+  // Set today's date
+  document.getElementById('meet-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('meet-name-wrap').style.display = 'none';
+  document.getElementById('meet-phone').value = '';
+  document.getElementById('meet-note').value = '';
+  document.getElementById('meeting-modal').style.display = 'flex';
+}
+function closeMeetingModal() {
+  document.getElementById('meeting-modal').style.display = 'none';
+}
+function fillMeetingPhone() {
+  const sel = document.getElementById('meet-lead');
+  const opt = sel.options[sel.selectedIndex];
+  const nameWrap = document.getElementById('meet-name-wrap');
+  if (sel.value === '__new__') {
+    nameWrap.style.display = 'block';
+    document.getElementById('meet-phone').value = '';
+  } else {
+    nameWrap.style.display = 'none';
+    document.getElementById('meet-phone').value = opt.dataset.phone || '';
+  }
+}
+function saveMeeting(sendWA) {
+  const leadId = document.getElementById('meet-lead').value;
+  const sel = document.getElementById('meet-lead');
+  const opt = sel.options[sel.selectedIndex];
+  const isNew = leadId === '__new__';
+  // Get client name: for new use input, for lead use data-client attr, fallback to option text
+  const client = isNew
+    ? document.getElementById('meet-name').value.trim()
+    : (opt.getAttribute('data-client') || opt.text || '').trim();
+  const phone = document.getElementById('meet-phone').value.trim();
+  const type = document.getElementById('meet-type').value.replace(/^[\s\S]*?\s/, '').trim();
+  const date = document.getElementById('meet-date').value;
+  const time = document.getElementById('meet-time').value;
+  const note = document.getElementById('meet-note').value.trim();
+
+  if (!client || !date) { alert('Заполни клиента и дату'); return; }
+
+  // Open WhatsApp FIRST — must be synchronous with user click
+  if (sendWA && phone) {
+    let cleanPhone = phone.replace(/[^0-9]/g,'');
+    // KZ: replace leading 8 with 7 for international format
+    if (cleanPhone.startsWith('8') && cleanPhone.length === 11) cleanPhone = '7' + cleanPhone.slice(1);
+    const parts = date.split('-');
+    const fmtDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+    const timeStr = time ? ` в ${time}` : '';
+    const noteStr = note ? `\n\nДополнительно: ${note}` : '';
+    const text = `Здравствуйте, ${client}!\n\nНапоминаем, что у нас назначен${type==='Встреча'?'а':''} ${type.toLowerCase()} ${fmtDate}${timeStr}.\n\nЕсли есть вопросы - пишите. Ждём вас!\n\nС уважением,\n${state.user.name}\n${state.user.dealer}`;
+    window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  if (!state.meetings) state.meetings = [];
+  const meeting = { id: 'mtg_'+Date.now(), manager: state.user.name, client, phone, type, date, time, note, leadId: isNew ? null : leadId };
+  state.meetings.push(meeting);
+
+  // Update lead nextAction if linked
+  if (leadId && leadId !== '__new__') {
+    const lead = state.leads.find(l => l.id === leadId);
+    if (lead) { lead.nextAction = type; lead.nextActionDate = date; lead.lastContact = new Date().toISOString().split('T')[0]; }
+    saveLeads();
+  }
+  try { localStorage.setItem('vmd_meetings', JSON.stringify(state.meetings)); } catch(e){}
+
+  closeMeetingModal();
+  buildNotifications();
+  renderSidebar();
+  renderApp();
+  showToast(`✅ ${type} с ${client} на ${fmtDate||date}`, 'green');
+}
+function showDayEvents(dateStr) {
+  const u = state.user;
+  const myLeads = state.leads.filter(l => l.manager === u.name);
+  const meetings = state.meetings ? state.meetings.filter(m => m.manager === u.name && m.date === dateStr) : [];
+  const leadTasks = myLeads.filter(l => l.nextActionDate === dateStr).map(l => ({ type: l.nextAction||'Звонок', client: l.client, phone: l.phone||'', fromLead: true }));
+  const all = [...meetings, ...leadTasks];
+  const typeIcon = t => t==='Встреча'?'🤝':t==='Тест-драйв'?'🚗':t==='КП'?'📄':'📞';
+
+  const modal = document.getElementById('day-modal');
+  document.getElementById('day-modal-title').textContent = '📅 ' + dateStr;
+  document.getElementById('day-modal-body').innerHTML = all.length
+    ? all.map(e=>`<div class="event-item" style="margin-bottom:10px;">
+        <div class="event-icon">${typeIcon(e.type)}</div>
+        <div class="event-body"><div class="event-client">${e.client}</div><div class="event-meta">${e.type}${e.time?' · '+e.time:''}</div></div>
+        ${e.phone ? `<a class="wa-btn green" href="https://wa.me/${(p=>p.startsWith('8')&&p.length===11?'7'+p.slice(1):p)(e.phone.replace(/[^0-9]/g,''))}" target="_blank">WA</a>` : ''}
+      </div>`).join('')
+    : '<div style="color:var(--text2);text-align:center;padding:16px;">Нет событий в этот день</div>';
+  modal.style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════════════════════════
