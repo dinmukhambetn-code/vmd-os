@@ -352,6 +352,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   .dealer-grid{grid-template-columns:1fr;}
 }
 
+/* ── AI ASSISTANT ──────────────────────────────────────── */
+.ai-fab{position:fixed;bottom:88px;right:16px;width:54px;height:54px;background:linear-gradient(135deg,#1565C0,#00B0FF);color:#fff;border:none;border-radius:50%;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(21,101,192,.45);z-index:500;display:none;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;}
+.ai-fab:hover{transform:scale(1.12);box-shadow:0 6px 28px rgba(21,101,192,.6);}
+.ai-fab.show{display:flex;}
+@media(max-width:640px){.ai-fab{bottom:72px;right:12px;width:48px;height:48px;font-size:20px;}}
+
+.ai-panel{position:fixed;right:-390px;top:56px;bottom:0;width:370px;background:var(--card);box-shadow:-4px 0 28px rgba(0,0,0,.18);z-index:450;display:flex;flex-direction:column;transition:right .32s cubic-bezier(.4,0,.2,1);border-left:1px solid var(--border);}
+.ai-panel.open{right:0;}
+@media(max-width:640px){.ai-panel{width:100%;right:-100%;top:0;bottom:60px;border-left:none;}.ai-panel.open{right:0;}}
+
+.ai-header{background:linear-gradient(135deg,#0D1B2A 0%,#1565C0 100%);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.ai-header-left{display:flex;align-items:center;gap:10px;}
+.ai-avatar-circle{width:36px;height:36px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.ai-hname{font-weight:700;font-size:14px;line-height:1.2;}
+.ai-hrole{font-size:10px;opacity:.65;margin-top:1px;}
+.ai-hbtns{display:flex;align-items:center;gap:6px;}
+.ai-hbtn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:600;}
+.ai-hbtn:hover{background:rgba(255,255,255,.28);}
+.ai-close-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:2px 4px;}
+
+#ai-body{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+.ai-setup-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center;}
+.ai-setup-icon{font-size:48px;margin-bottom:12px;}
+.ai-setup-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+.ai-setup-sub{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
+.ai-setup-input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;margin-bottom:10px;font-family:monospace;}
+.ai-setup-input:focus{border-color:var(--blue);}
+.ai-setup-btn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+.ai-setup-note{font-size:11px;color:var(--text2);margin-top:10px;}
+
+.ai-quick-wrap{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ai-quick-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
+.ai-quick-btns{display:flex;flex-wrap:wrap;gap:5px;}
+.ai-quick-btn{padding:5px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.ai-quick-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+.ai-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.ai-msg{display:flex;max-width:100%;}
+.ai-msg.user{justify-content:flex-end;}
+.ai-msg.ai{justify-content:flex-start;}
+.ai-bubble{max-width:86%;padding:10px 13px;border-radius:16px;font-size:13px;line-height:1.55;}
+.ai-msg.user .ai-bubble{background:var(--blue);color:#fff;border-radius:16px 16px 3px 16px;}
+.ai-msg.ai .ai-bubble{background:var(--bg);color:var(--text);border-radius:16px 16px 16px 3px;border:1px solid var(--border);}
+.ai-typing{display:flex;align-items:center;gap:5px;padding:13px 16px;}
+.ai-typing span{width:7px;height:7px;border-radius:50%;background:var(--text2);display:inline-block;animation:ait 1.4s infinite;}
+.ai-typing span:nth-child(2){animation-delay:.22s;}
+.ai-typing span:nth-child(3){animation-delay:.44s;}
+@keyframes ait{0%,60%,100%{opacity:.25;transform:translateY(0);}30%{opacity:1;transform:translateY(-4px);}}
+
+.ai-input-wrap{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;background:var(--card);}
+.ai-input{flex:1;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;resize:none;font-family:inherit;color:var(--text);background:var(--bg);}
+.ai-input:focus{border-color:var(--blue);}
+.ai-send{padding:10px 15px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:16px;cursor:pointer;flex-shrink:0;transition:background .15s;}
+.ai-send:hover{background:var(--blue2);}
+.ai-send:disabled{background:var(--border);cursor:not-allowed;}
+.ai-footer{display:flex;justify-content:center;gap:12px;padding:6px 12px 8px;flex-shrink:0;}
+.ai-footer-btn{font-size:10px;color:var(--text2);background:none;border:none;cursor:pointer;padding:2px;}
+.ai-footer-btn:hover{color:var(--text);}
+
+.lead-ai-btn{padding:4px 10px;border:1.5px solid #00B0FF;border-radius:20px;font-size:11px;font-weight:600;color:#00B0FF;background:transparent;cursor:pointer;transition:all .15s;}
+.lead-ai-btn:hover{background:#00B0FF;color:#fff;}
+
 /* ── UTILS ─────────────────────────────────────────────── */
 .flex{display:flex;}.gap8{gap:8px;}.gap12{gap:12px;}.items-center{align-items:center;}
 .text-green{color:var(--green2);}.text-red{color:var(--red);}.text-orange{color:var(--orange);}
@@ -520,8 +583,11 @@ mark{background:#FFF176;border-radius:2px;padding:0 2px;}
       </div>
     </div>
     <div class="form-group">
-      <label>Заметка</label>
-      <input id="meet-note" type="text" placeholder="Необязательно">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <label style="margin-bottom:0;">Текст для WA / Заметка</label>
+        <button id="ai-wa-gen-btn" onclick="generateAIWAText()" style="padding:4px 10px;background:linear-gradient(135deg,#1565C0,#00B0FF);color:#fff;border:none;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;">✨ AI текст</button>
+      </div>
+      <input id="meet-note" type="text" placeholder="Или нажми ✨ AI текст — сгенерирую автоматически">
     </div>
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button onclick="saveMeeting(false)" style="flex:1;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">💾 Сохранить</button>
@@ -576,7 +642,36 @@ mark{background:#FFF176;border-radius:2px;padding:0 2px;}
 
 <input type="file" id="file-input" accept=".csv" onchange="handleCSV(event)">
 
+<!-- ═══════════════════ AI FAB ══════════════════════════════ -->
+<button class="ai-fab" id="ai-fab" onclick="toggleAI()" title="VMD AI Ассистент">🤖</button>
+
+<!-- ═══════════════════ AI PANEL ═══════════════════════════ -->
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-header">
+    <div class="ai-header-left">
+      <div class="ai-avatar-circle">🤖</div>
+      <div>
+        <div class="ai-hname" id="ai-panel-name">VMD AI</div>
+        <div class="ai-hrole" id="ai-panel-role">Ассистент</div>
+      </div>
+    </div>
+    <div class="ai-hbtns">
+      <button class="ai-hbtn" onclick="clearAIChat()">🗑 Очистить</button>
+      <button class="ai-close-btn" onclick="closeAI()">✕</button>
+    </div>
+  </div>
+  <div id="ai-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+</div>
+
 <script>
+// ═══════════════════════════════════════════════════════════════
+//  ⚙️  КОНФИГУРАЦИЯ — вставь API ключ один раз здесь
+// ═══════════════════════════════════════════════════════════════
+const VMD_CONFIG = {
+  // Получи ключ на https://console.anthropic.com → API Keys → Create Key
+  // Вставь между кавычками и сохрани файл:
+  AI_KEY: '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',
+};
 // ═══════════════════════════════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════════════════════════════
@@ -1030,6 +1125,7 @@ function doLogin() {
   document.getElementById('app-shell').style.display = 'flex';
   document.getElementById('role-badge').textContent = ROLE_LABELS[u.role];
   document.getElementById('user-avatar').textContent = u.name[0];
+  document.getElementById('ai-fab').classList.add('show');
   buildNotifications();
   renderSidebar();
   renderApp();
@@ -1042,6 +1138,9 @@ function doLogout() {
   state.currentTab = 0;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('ai-fab').classList.remove('show');
+  closeAI();
+  aiChat.messages = [];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1408,6 +1507,7 @@ function managerLeads() {
               `<button class="status-btn" onclick="event.stopPropagation();changeStatus('${l.id}','${st}')">${st}</button>`
             ).join('')}
             <button class="status-btn red-btn" onclick="event.stopPropagation();changeStatus('${l.id}','Отказ')">Отказ</button>
+            <button class="lead-ai-btn" onclick="event.stopPropagation();openAIForLead('${l.id}')">🤖 AI совет</button>
           </div>
         </div>
       </div>`;
@@ -1695,6 +1795,7 @@ function renderArchiveList(leads, q) {
             `<button class="status-btn" onclick="event.stopPropagation();changeStatus('${l.id}','${st}')">${st}</button>`
           ).join('')}
           <button class="status-btn red-btn" onclick="event.stopPropagation();changeStatus('${l.id}','Отказ')">Отказ</button>
+          <button class="lead-ai-btn" onclick="event.stopPropagation();openAIForLead('${l.id}')">🤖 AI совет</button>
         </div>
       </div>
     </div>`;
@@ -2177,6 +2278,7 @@ function ropLeads() {
               `<button class="status-btn" onclick="event.stopPropagation();changeStatus('${l.id}','${st}')">${st}</button>`
             ).join('')}
             <button class="status-btn red-btn" onclick="event.stopPropagation();changeStatus('${l.id}','Отказ')">Отказ</button>
+            <button class="lead-ai-btn" onclick="event.stopPropagation();openAIForLead('${l.id}')">🤖 AI совет</button>
           </div>
         </div>
       </div>`;
@@ -2741,6 +2843,432 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(askNotifPermission, 2000);
   setTimeout(scheduleMeetingReminders, 3000);
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  AI ASSISTANT — VMD AI
+// ═══════════════════════════════════════════════════════════════
+const aiChat = {
+  messages: [],
+  loading: false,
+  get key() {
+    // Сначала берём из конфига (вшитый ключ), иначе из localStorage (ввёл пользователь)
+    if (VMD_CONFIG.AI_KEY && VMD_CONFIG.AI_KEY.length > 10) return VMD_CONFIG.AI_KEY;
+    try { return localStorage.getItem('vmd_ai_key') || ''; } catch(e){ return ''; }
+  },
+  set key(v) { try { localStorage.setItem('vmd_ai_key', v); } catch(e){} },
+};
+
+// Role-specific panel headers
+const AI_ROLE_META = {
+  manager:  { name: 'VMD AI · Ассистент',    role: 'Менеджер по продажам',   avatar: '🎯' },
+  rop:      { name: 'VMD AI · Аналитик',     role: 'Руководитель отдела продаж', avatar: '📊' },
+  director: { name: 'VMD AI · Советник',     role: 'Директор ДЦ',            avatar: '🏢' },
+  distr:    { name: 'VMD AI · Стратег',      role: 'Дистрибьютор',           avatar: '🌐' },
+  owner:    { name: 'VMD AI · Стратег',      role: 'Учредитель холдинга',    avatar: '💼' },
+};
+
+// Role-specific quick actions
+const AI_QUICK = {
+  manager: [
+    { icon:'📲', text:'WA клиенту',       msg:'Напиши готовый WhatsApp-текст для самого горящего лида из моего списка. Только текст, без пояснений.' },
+    { icon:'🎯', text:'Что делать сейчас?', msg:'Какой лид требует внимания прямо сейчас и какое конкретное действие мне сделать? 1–2 предложения.' },
+    { icon:'💬', text:'Скрипт звонка',    msg:'Напиши скрипт холодного звонка клиенту по Kaiyi X3. Коротко, 5–7 реплик.' },
+    { icon:'📈', text:'Поднять скоринг',  msg:'Что конкретно мне сделать чтобы поднять скоринг РЛ до 70%+? Список действий по каждому незаполненному полю.' },
+  ],
+  rop: [
+    { icon:'📊', text:'Анализ команды',   msg:'Проанализируй мою команду по данным. Кто лучший, кто отстаёт, почему? Конкретно.' },
+    { icon:'🔴', text:'Горящие проблемы', msg:'Какие самые срочные проблемы прямо сейчас? Топ-3 с конкретными действиями.' },
+    { icon:'📈', text:'Поднять конверсию',msg:'Как поднять конверсию дилера? 3 конкретных действия на эту неделю с ожидаемым эффектом.' },
+    { icon:'📋', text:'План на сегодня',  msg:'Составь план действий РОПа на сегодня на основе данных команды. По часам.' },
+  ],
+  director: [
+    { icon:'📋', text:'Отчёт для дистр.', msg:'Сделай краткий аналитический отчёт по моему дилеру для дистрибьютора. Структурированно.' },
+    { icon:'⚖️', text:'Юридические риски',msg:'Какие юридические риски по лидам без ОПД и как срочно их закрыть?' },
+    { icon:'💰', text:'Потери выручки',   msg:'Рассчитай потенциальные потери выручки от горящих лидов и архива. С цифрами.' },
+    { icon:'🎯', text:'Топ-3 действия',   msg:'Какие 3 действия дадут наибольший результат для дилера в ближайшую неделю?' },
+  ],
+  distr: [
+    { icon:'🌐', text:'Анализ сети',      msg:'Проанализируй всю дилерскую сеть. Кто лучший, кто требует вмешательства и почему?' },
+    { icon:'🏆', text:'Рейтинг дилеров',  msg:'Составь рейтинг дилеров с комментарием о причинах отставания каждого.' },
+    { icon:'📊', text:'Прогноз продаж',   msg:'Прогноз продаж по сети на следующий месяц на основе текущей динамики.' },
+    { icon:'💡', text:'Системные проблемы',msg:'Какие системные проблемы в сети и как их решить? Конкретный план.' },
+  ],
+  owner: [
+    { icon:'💰', text:'ROI и потери',     msg:'Рассчитай упущенную выручку по всей сети. Приоритеты для устранения потерь.' },
+    { icon:'🌐', text:'Стратегия сети',   msg:'Стратегия развития дилерской сети Kaiyi Kazakhstan на следующий квартал.' },
+    { icon:'📊', text:'Сравнение дилеров',msg:'Сравни дилеров по ключевым показателям. Лучшие практики для тиражирования.' },
+    { icon:'🔮', text:'Прогноз',          msg:'Прогноз продаж по сети на следующий месяц с обоснованием.' },
+  ],
+};
+
+// Build system prompt based on role + real data
+function buildSystemPrompt() {
+  const u = state.user;
+  if (!u) return 'Ты AI-ассистент.';
+  const leads = getAccessibleLeads();
+  const contracts = leads.filter(l => l.status==='Контракт').length;
+  const refused   = leads.filter(l => l.status==='Отказ').length;
+  const hot72     = leads.filter(l => is72hAlert(l)).length;
+  const noContact = leads.filter(l => !l.lastContact && l.status==='Новый').length;
+  const conv      = leads.length ? (contracts/leads.length*100).toFixed(1) : '0';
+  const sc        = avgScore(leads);
+  const today     = new Date().toLocaleDateString('ru', {day:'numeric', month:'long', year:'numeric'});
+
+  // Compact leads summary (top 12)
+  const summary = leads.slice(0,12).map(l =>
+    `• ${l.id} ${l.client} | ${l.status} | ${l.model||'—'} | скоринг ${scoreRl(l)}%${is72hAlert(l)?' 🔥':''}`
+  ).join('\n');
+
+  const base = `Сегодня: ${today}. Система: VMD OS, Kaiyi Kazakhstan.`;
+
+  const prompts = {
+    manager: `${base}
+Ты AI-ассистент менеджера по продажам Kaiyi. Помогаешь продавать больше и работать эффективнее.
+
+Менеджер: ${u.name} | Дилер: ${u.dealer}
+Лидов: ${leads.length} | Контрактов: ${contracts} | Отказов: ${refused}
+Горящих 72ч+: ${hot72} | Конверсия: ${conv}% | Скоринг РЛ: ${sc}%
+
+Мои лиды:
+${summary}
+
+Умеешь:
+— Писать готовые WhatsApp-тексты (сразу текст без объяснений)
+— Давать конкретный следующий шаг по любому лиду
+— Писать скрипты звонков и встреч
+— Советовать как заполнить РЛ для повышения скоринга
+— Помогать с возражениями клиентов
+
+Отвечай кратко, конкретно, без воды. WhatsApp-тексты — сразу готовые. Язык: русский.`,
+
+    rop: `${base}
+Ты AI-аналитик РОПа (Руководителя отдела продаж) дилера ${u.dealer}.
+
+Команда: ${[...new Set(leads.map(l=>l.manager))].length} менеджеров
+Лидов: ${leads.length} | Контрактов: ${contracts} | Горящих 72ч: ${hot72}
+Без первого контакта: ${noContact} | Конверсия: ${conv}% | Скоринг: ${sc}%
+
+Лиды команды (до 12):
+${summary}
+
+Помогаешь:
+— Анализировать эффективность менеджеров
+— Выявлять горящие проблемы
+— Давать план действий на день/неделю
+— Прогнозировать выполнение плана
+— Готовить разборы для менеджеров
+
+Всегда с числами и именами. Конкретные действия. Язык: русский.`,
+
+    director: `${base}
+Ты AI-советник директора дилерского центра ${u.dealer}.
+
+Лидов: ${leads.length} | Контрактов: ${contracts} | Горящих 72ч: ${hot72}
+Конверсия: ${conv}% | Скоринг РЛ: ${sc}%
+Потенц. потери: ${fmtMoney(lostRevenue(leads).potential)}
+
+Лиды ДЦ (до 12):
+${summary}
+
+Помогаешь:
+— Анализировать KPI дилера
+— Выявлять юридические риски (ОПД)
+— Оценивать финансовые потери
+— Готовить отчёты для дистрибьютора
+— Давать стратегические рекомендации
+
+Фокус на деньгах и рисках. Язык: русский.`,
+
+    distr: `${base}
+Ты AI-аналитик дистрибьютора Kaiyi Kazakhstan. Видишь всю сеть.
+
+Дилеров: ${[...new Set(leads.map(l=>l.dealer))].length}
+Лидов в сети: ${leads.length} | Контрактов: ${contracts} | Горящих: ${hot72}
+Конверсия сети: ${conv}% | Средний скоринг: ${sc}%
+Общие потери: ${fmtMoney(lostRevenue(leads).potential)}
+
+Данные сети (до 12 лидов):
+${summary}
+
+Помогаешь:
+— Сравнивать дилеров по KPI
+— Выявлять системные проблемы
+— Прогнозировать продажи
+— Давать рекомендации по отстающим дилерам
+— Готовить аналитические отчёты
+
+Стратегически, с анализом данных. Язык: русский.`,
+
+    owner: `${base}
+Ты AI-советник учредителя автохолдинга Kaiyi Kazakhstan.
+
+Дилеров в сети: ${[...new Set(leads.map(l=>l.dealer))].length}
+Лидов: ${leads.length} | Контрактов: ${contracts}
+Конверсия: ${conv}% | Скоринг: ${sc}%
+Потенциальные потери: ${fmtMoney(lostRevenue(leads).potential)}
+
+Помогаешь:
+— Принимать стратегические решения
+— Оценивать ROI и упущенную выручку
+— Сравнивать дилеров
+— Прогнозировать развитие сети
+
+Стратегически, ориентированно на деньги и рост. Язык: русский.`,
+  };
+
+  return prompts[u.role] || prompts.manager;
+}
+
+// API call to Claude
+async function callClaude(userMsg) {
+  if (!aiChat.key) { renderAISetup(); return; }
+  aiChat.messages.push({ role:'user', content: userMsg });
+  aiChat.loading = true;
+  renderAIMessages();
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': aiChat.key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: buildSystemPrompt(),
+        messages: aiChat.messages,
+      }),
+    });
+    if (!resp.ok) {
+      const e = await resp.json().catch(()=>({}));
+      throw new Error(e.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || '—';
+    aiChat.messages.push({ role:'assistant', content: reply });
+  } catch(err) {
+    aiChat.messages.push({ role:'assistant', content:`❌ Ошибка: ${err.message}\n\nПроверь API ключ или попробуй позже.` });
+  }
+  aiChat.loading = false;
+  renderAIMessages();
+}
+
+// Toggle panel
+function toggleAI() {
+  const panel = document.getElementById('ai-panel');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) { closeAI(); return; }
+  panel.classList.add('open');
+  updateAIHeader();
+  if (!aiChat.key) renderAISetup();
+  else renderAIPanel();
+}
+
+function closeAI() {
+  document.getElementById('ai-panel').classList.remove('open');
+}
+
+function updateAIHeader() {
+  const role = state.user?.role || 'manager';
+  const meta = AI_ROLE_META[role] || AI_ROLE_META.manager;
+  const nameEl = document.getElementById('ai-panel-name');
+  const roleEl = document.getElementById('ai-panel-role');
+  const avatarEl = document.querySelector('.ai-avatar-circle');
+  if (nameEl) nameEl.textContent = meta.name;
+  if (roleEl) roleEl.textContent = meta.role;
+  if (avatarEl) avatarEl.textContent = meta.avatar;
+}
+
+// Render API key setup screen
+function renderAISetup() {
+  const body = document.getElementById('ai-body');
+  if (!body) return;
+  body.innerHTML = `
+    <div class="ai-setup-wrap">
+      <div class="ai-setup-icon">🔑</div>
+      <div class="ai-setup-title">Настройка AI-ассистента</div>
+      <div class="ai-setup-sub">
+        Для работы VMD AI нужен API-ключ Anthropic.<br>
+        Получи его бесплатно на<br>
+        <a href="https://console.anthropic.com" target="_blank" style="color:var(--blue);font-weight:600;">console.anthropic.com</a>
+      </div>
+      <input id="ai-key-inp" class="ai-setup-input" type="password"
+        placeholder="sk-ant-api03-…" autocomplete="off"
+        onkeydown="if(event.key==='Enter') submitAIKey()">
+      <button class="ai-setup-btn" onclick="submitAIKey()">💾 Сохранить и запустить AI</button>
+      <div class="ai-setup-note">🔒 Ключ хранится только в вашем браузере</div>
+    </div>`;
+}
+
+// Save key and boot panel
+function submitAIKey() {
+  const k = document.getElementById('ai-key-inp')?.value?.trim();
+  if (!k || !k.startsWith('sk-')) { alert('Введи корректный API ключ (начинается с sk-)'); return; }
+  aiChat.key = k;
+  renderAIPanel();
+  // Welcome message
+  const welcomes = {
+    manager:  'Привет! Я твой AI-ассистент по продажам Kaiyi 🎯\n\nВижу твои лиды и готов помочь: написать WA клиенту, подсказать следующий шаг или составить скрипт звонка.\n\nС чего начнём?',
+    rop:      'Привет! Я AI-аналитик твоей команды 📊\n\nАнализирую данные менеджеров и готов выявить проблемы, составить план и помочь поднять конверсию.\n\nЧто смотрим первым?',
+    director: 'Добрый день! Я AI-советник директора 🏢\n\nГотов проанализировать KPI дилера, выявить риски и подготовить отчёт для дистрибьютора.\n\nЧто анализируем?',
+    distr:    'Добрый день! Я AI-аналитик дилерской сети 🌐\n\nВижу данные всех дилеров. Помогу выявить точки роста и системные проблемы.\n\nС чего начнём?',
+    owner:    'Добрый день! Я AI-стратег холдинга 💼\n\nАнализирую эффективность всей сети и готов дать рекомендации по росту.\n\nЧто интересует?',
+  };
+  const role = state.user?.role || 'manager';
+  aiChat.messages = [{ role:'assistant', content: welcomes[role] || welcomes.manager }];
+  renderAIMessages();
+}
+
+// Render main chat panel
+function renderAIPanel() {
+  const body = document.getElementById('ai-body');
+  if (!body) return;
+  const role = state.user?.role || 'manager';
+  const quick = AI_QUICK[role] || AI_QUICK.manager;
+
+  body.innerHTML = `
+    <div class="ai-quick-wrap">
+      <div class="ai-quick-label">Быстрые действия</div>
+      <div class="ai-quick-btns">
+        ${quick.map(a=>`<button class="ai-quick-btn" onclick="sendAIMsg(${JSON.stringify(a.msg)})">${a.icon} ${a.text}</button>`).join('')}
+      </div>
+    </div>
+    <div class="ai-messages" id="ai-messages"></div>
+    <div class="ai-input-wrap">
+      <input class="ai-input" id="ai-input" type="text"
+        placeholder="Задай вопрос или опиши ситуацию…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMsg();}">
+      <button class="ai-send" id="ai-send" onclick="sendAIMsg()">↑</button>
+    </div>
+    <div class="ai-footer">
+      <button class="ai-footer-btn" onclick="clearAIChat()">🗑 Очистить чат</button>
+      <span style="color:var(--border);">·</span>
+      ${(!VMD_CONFIG.AI_KEY || VMD_CONFIG.AI_KEY.length < 10) ? `<button class="ai-footer-btn" onclick="resetAIKey()">🔑 Сменить ключ</button><span style="color:var(--border);">·</span>` : ''}
+      <span style="font-size:10px;color:var(--text2);">claude-haiku · VMD AI</span>
+    </div>`;
+
+  renderAIMessages();
+  setTimeout(() => document.getElementById('ai-input')?.focus(), 120);
+}
+
+// Render messages list
+function renderAIMessages() {
+  const el = document.getElementById('ai-messages');
+  if (!el) return;
+
+  const msgHtml = aiChat.messages.map(m => {
+    const txt = m.content
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n/g,'<br>');
+    return `<div class="ai-msg ${m.role==='user'?'user':'ai'}">
+      <div class="ai-bubble">${txt}</div>
+    </div>`;
+  }).join('');
+
+  const typing = aiChat.loading ? `<div class="ai-msg ai">
+    <div class="ai-bubble ai-typing"><span></span><span></span><span></span></div>
+  </div>` : '';
+
+  el.innerHTML = msgHtml + typing;
+  el.scrollTop = el.scrollHeight;
+
+  // Disable send while loading
+  const sendBtn = document.getElementById('ai-send');
+  if (sendBtn) sendBtn.disabled = aiChat.loading;
+}
+
+// Send message
+async function sendAIMsg(preset) {
+  if (aiChat.loading) return;
+  if (!aiChat.key) { renderAISetup(); return; }
+  const input = document.getElementById('ai-input');
+  const text = preset || (input?.value?.trim() || '');
+  if (!text) return;
+  if (input && !preset) input.value = '';
+  await callClaude(text);
+}
+
+// Open AI panel pre-loaded with a specific lead context
+function openAIForLead(leadId) {
+  const lead = state.leads.find(l => l.id === leadId);
+  if (!lead) return;
+  const panel = document.getElementById('ai-panel');
+  panel.classList.add('open');
+  updateAIHeader();
+  if (!aiChat.key) { renderAISetup(); return; }
+  if (!document.getElementById('ai-messages')) renderAIPanel();
+  const msg = `Клиент: ${lead.client} (${lead.id})
+Статус: ${lead.status} | Модель: ${lead.model||'не указана'}
+Телефон: ${lead.phone||'нет'} | Источник: ${lead.source||'неизвестен'}
+Скоринг РЛ: ${scoreRl(lead)}%${is72hAlert(lead)?' | 🔥 ГОРЯЩИЙ (48ч без контакта)':''}${isOverdue(lead)?' | ⏰ ПРОСРОЧЕН':''}
+
+Что мне делать с этим клиентом прямо сейчас? Дай конкретный следующий шаг и готовый текст для контакта.`;
+  setTimeout(() => sendAIMsg(msg), 200);
+}
+
+// Generate WA text via AI for meeting modal
+async function generateAIWAText() {
+  if (!aiChat.key) {
+    alert('Сначала настройте API ключ — нажмите кнопку 🤖 в правом нижнем углу');
+    return;
+  }
+  const sel    = document.getElementById('meet-lead');
+  const opt    = sel?.options[sel.selectedIndex];
+  const client = opt?.getAttribute('data-client') || document.getElementById('meet-name')?.value || 'клиент';
+  const phone  = document.getElementById('meet-phone')?.value || '';
+  const type   = document.getElementById('meet-type')?.value?.replace(/^[\s\S]*?\s/,'').trim() || 'встреча';
+  const date   = document.getElementById('meet-date')?.value || '';
+  const time   = document.getElementById('meet-time')?.value || '';
+
+  const parts = date.split('-');
+  const fmtDate = parts.length===3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : date;
+
+  const btn = document.getElementById('ai-wa-gen-btn');
+  if (btn) { btn.textContent = '⏳ Генерирую…'; btn.disabled = true; }
+
+  const prompt = `Напиши ТОЛЬКО готовый WhatsApp текст (без объяснений) для клиента ${client}.
+Тип: ${type}, дата: ${fmtDate}${time?' в '+time:''}.
+Менеджер: ${state.user?.name}, дилер: ${state.user?.dealer}.
+Текст должен быть тёплым, дружелюбным, на русском, 3–5 предложений.`;
+
+  const tmpMessages = aiChat.messages;
+  aiChat.messages = [];
+  await callClaude(prompt);
+  const reply = aiChat.messages.find(m=>m.role==='assistant')?.content || '';
+  aiChat.messages = tmpMessages;
+
+  if (btn) { btn.textContent = '✨ AI текст'; btn.disabled = false; }
+
+  if (reply && !reply.startsWith('❌')) {
+    const noteField = document.getElementById('meet-note');
+    if (noteField) {
+      noteField.value = reply.replace(/<br>/g,'\n').replace(/<[^>]+>/g,'');
+      noteField.style.height = '80px';
+    }
+    // Open AI panel to show result
+    const panel = document.getElementById('ai-panel');
+    panel.classList.add('open');
+    updateAIHeader();
+    if (!document.getElementById('ai-messages')) renderAIPanel();
+    renderAIMessages();
+  }
+}
+
+// Utility
+function clearAIChat() {
+  aiChat.messages = [];
+  if (document.getElementById('ai-messages')) renderAIMessages();
+}
+
+function resetAIKey() {
+  aiChat.key = '';
+  aiChat.messages = [];
+  renderAISetup();
+}
 
 // ── PWA Service Worker
 if ('serviceWorker' in navigator) {
