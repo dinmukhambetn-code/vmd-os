@@ -490,24 +490,70 @@ mark{background:#FFF176;border-radius:2px;padding:0 2px;}
 
 <!-- ═══════════════════ LOGIN ═══════════════════ -->
 <div id="login-screen">
-  <div class="login-card">
+  <!-- ВХОД -->
+  <div class="login-card" id="login-card">
     <div class="login-logo">
       <div class="logo-text">VMD OS</div>
       <div class="logo-sub">AI-Операционная система автохолдинга</div>
     </div>
     <div class="form-group">
-      <label>Логин</label>
-      <input type="text" id="login-input" placeholder="Введите логин" value="manager1">
+      <label>Имя (Фамилия Имя)</label>
+      <input type="text" id="login-input" placeholder="Например: Иванов Иван" value="manager1" autocomplete="name">
     </div>
     <div class="form-group">
-      <label>Пароль</label>
-      <input type="password" id="pass-input" placeholder="••••••" value="1234">
+      <label>PIN-код</label>
+      <input type="password" id="pass-input" placeholder="••••" value="1234" maxlength="8" inputmode="numeric">
     </div>
-    <button class="btn-login" onclick="doLogin()">Войти</button>
-    <div class="login-hint">
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Войти</button>
+    <div id="login-error" style="color:#ef5350;font-size:13px;text-align:center;margin-top:8px;display:none;"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <span style="font-size:13px;color:var(--text2);">Нет аккаунта?</span>
+      <button onclick="showRegister()" style="background:none;border:none;color:var(--blue);font-size:13px;cursor:pointer;font-weight:600;padding:0 4px;">Зарегистрироваться</button>
+    </div>
+    <div class="login-hint" id="login-hint-demo">
       <strong>Тест-аккаунты:</strong><br>
       manager1 · rop1 · director1 · distr1 · owner1<br>
       Пароль для всех: <strong>1234</strong>
+    </div>
+  </div>
+
+  <!-- РЕГИСТРАЦИЯ -->
+  <div class="login-card" id="register-card" style="display:none;">
+    <div class="login-logo">
+      <div class="logo-text" style="font-size:20px;">📝 Регистрация</div>
+      <div class="logo-sub">Kaiyi Kazakhstan — VMD OS</div>
+    </div>
+    <div class="form-group">
+      <label>Фамилия и Имя</label>
+      <input type="text" id="reg-name" placeholder="Например: Сейткали Арман" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label>Дилерский центр</label>
+      <select id="reg-dealer" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:14px;outline:none;">
+        <option value="">— Выберите ДЦ —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Должность</label>
+      <select id="reg-role" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:14px;outline:none;">
+        <option value="manager">Менеджер по продажам</option>
+        <option value="rop">РОП (Руководитель отдела продаж)</option>
+        <option value="director">Директор ДЦ</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>PIN-код (4–8 цифр)</label>
+      <input type="password" id="reg-pin" placeholder="Придумай PIN" maxlength="8" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label>Повтори PIN</label>
+      <input type="password" id="reg-pin2" placeholder="Повтори PIN" maxlength="8" inputmode="numeric">
+    </div>
+    <button class="btn-login" id="reg-btn" onclick="doRegister()">Отправить заявку</button>
+    <div id="reg-error" style="color:#ef5350;font-size:13px;text-align:center;margin-top:8px;display:none;"></div>
+    <div id="reg-success" style="color:#4caf50;font-size:13px;text-align:center;margin-top:8px;display:none;"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <button onclick="showLogin()" style="background:none;border:none;color:var(--blue);font-size:13px;cursor:pointer;font-weight:600;">← Назад к входу</button>
     </div>
   </div>
 </div>
@@ -665,12 +711,53 @@ mark{background:#FFF176;border-radius:2px;padding:0 2px;}
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  ⚙️  КОНФИГУРАЦИЯ — вставь API ключ один раз здесь
+//  ⚙️  КОНФИГУРАЦИЯ
 // ═══════════════════════════════════════════════════════════════
 const VMD_CONFIG = {
-  // Получи ключ на https://console.anthropic.com → API Keys → Create Key
-  // Вставь между кавычками и сохрани файл:
-  AI_KEY: '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',
+  AI_KEY:    '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',
+  GAS_URL:   'https://script.google.com/macros/s/AKfycbymqhMkbDKrOPw7ArNxsIBGzsBzz5oI3ZLilR4L-f_Y4uBpQoGFm27jz6pvOcqJ43C48Q/exec',
+  GAS_TOKEN: 'vmd2026',
+  // Список реальных дилеров для регистрации
+  DEALERS: [
+    'Kaiyi Павлодар',
+    'Kaiyi Алматы',
+    'Kaiyi Астана',
+    'Kaiyi Шымкент',
+    'Kaiyi Актобе',
+    'Kaiyi Атырау',
+    'Kaiyi Усть-Каменогорск',
+    'Kaiyi Семей',
+    'Kaiyi Костанай',
+    'Kaiyi Петропавловск',
+    'Kaiyi Тараз',
+    'Kaiyi Кызылорда',
+  ],
+};
+
+// ── GAS API ────────────────────────────────────────────────────
+const gas = {
+  get useGAS() { return VMD_CONFIG.GAS_URL && VMD_CONFIG.GAS_URL.length > 10; },
+
+  async call(action, body = {}) {
+    if (!this.useGAS) return { ok: false, error: 'GAS не настроен' };
+    try {
+      const res = await fetch(VMD_CONFIG.GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action, token: VMD_CONFIG.GAS_TOKEN, ...body }),
+      });
+      return await res.json();
+    } catch(e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  async login(name, pin) { return this.call('login', { name, pin }); },
+  async register(name, pin, role, dealer) { return this.call('register', { name, pin, role, dealer }); },
+  async getLeads(dealer) { return this.call('getLeads', { dealer }); },
+  async saveLead(lead)   { return this.call('saveLead', { lead }); },
+  async deleteLead(id)   { return this.call('deleteLead', { id }); },
+  async getUsers(dealer) { return this.call('getUsers', { dealer }); },
+  async approveUser(id, status) { return this.call('approveUser', { id, status }); },
 };
 // ═══════════════════════════════════════════════════════════════
 //  DATA
@@ -765,10 +852,22 @@ function clearSession() {
 }
 function restoreSession() {
   try {
-    const login = localStorage.getItem('vmd_session');
-    if (login && USERS[login]) {
-      document.getElementById('login-input').value = login;
-      document.getElementById('pass-input').value = USERS[login].pass;
+    const saved = localStorage.getItem('vmd_session');
+    if (!saved) return false;
+    // Новый формат: JSON {name, pin}
+    try {
+      const { name, pin } = JSON.parse(saved);
+      if (name && pin) {
+        document.getElementById('login-input').value = name;
+        document.getElementById('pass-input').value = pin;
+        doLogin();
+        return true;
+      }
+    } catch(e) {}
+    // Старый формат: просто логин (тест-аккаунты)
+    if (USERS[saved]) {
+      document.getElementById('login-input').value = saved;
+      document.getElementById('pass-input').value = USERS[saved].pass;
       doLogin();
       return true;
     }
@@ -1111,16 +1210,114 @@ function changeStatus(id, newStatus) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  LOGIN / LOGOUT
+//  LOGIN / LOGOUT / REGISTER
 // ═══════════════════════════════════════════════════════════════
-function doLogin() {
-  const login = document.getElementById('login-input').value.trim();
-  const pass  = document.getElementById('pass-input').value.trim();
-  const u = USERS[login];
-  if (!u || u.pass !== pass) { alert('Неверный логин или пароль'); return; }
-  state.user = { ...u, login };
+
+function showRegister() {
+  document.getElementById('login-card').style.display = 'none';
+  document.getElementById('register-card').style.display = '';
+  // Заполняем список дилеров
+  const sel = document.getElementById('reg-dealer');
+  sel.innerHTML = '<option value="">— Выберите ДЦ —</option>';
+  VMD_CONFIG.DEALERS.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    sel.appendChild(o);
+  });
+}
+
+function showLogin() {
+  document.getElementById('register-card').style.display = 'none';
+  document.getElementById('login-card').style.display = '';
+  document.getElementById('reg-error').style.display = 'none';
+  document.getElementById('reg-success').style.display = 'none';
+}
+
+async function doRegister() {
+  const name   = document.getElementById('reg-name').value.trim();
+  const dealer = document.getElementById('reg-dealer').value;
+  const role   = document.getElementById('reg-role').value;
+  const pin    = document.getElementById('reg-pin').value.trim();
+  const pin2   = document.getElementById('reg-pin2').value.trim();
+  const errEl  = document.getElementById('reg-error');
+  const okEl   = document.getElementById('reg-success');
+  const btn    = document.getElementById('reg-btn');
+
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if (!name || !dealer || !role || !pin) { errEl.textContent = 'Заполни все поля'; errEl.style.display = ''; return; }
+  if (pin !== pin2) { errEl.textContent = 'PIN-коды не совпадают'; errEl.style.display = ''; return; }
+  if (pin.length < 4) { errEl.textContent = 'PIN минимум 4 цифры'; errEl.style.display = ''; return; }
+
+  if (!gas.useGAS) {
+    errEl.textContent = 'Google Sheets не подключён. Обратитесь к администратору.';
+    errEl.style.display = ''; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Отправка...';
+  const res = await gas.register(name, pin, role, dealer);
+  btn.disabled = false; btn.textContent = 'Отправить заявку';
+
+  if (res.ok) {
+    okEl.textContent = res.message || 'Заявка отправлена! Ожидайте активации.';
+    okEl.style.display = '';
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-pin').value = '';
+    document.getElementById('reg-pin2').value = '';
+  } else {
+    errEl.textContent = res.error || 'Ошибка';
+    errEl.style.display = '';
+  }
+}
+
+async function doLogin() {
+  const loginVal = document.getElementById('login-input').value.trim();
+  const passVal  = document.getElementById('pass-input').value.trim();
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+
+  // Если GAS подключён — авторизация через Google Sheets
+  if (gas.useGAS) {
+    btn.disabled = true; btn.textContent = 'Вход...';
+    const res = await gas.login(loginVal, passVal);
+    btn.disabled = false; btn.textContent = 'Войти';
+
+    if (!res.ok) {
+      errEl.textContent = res.error || 'Неверные данные';
+      errEl.style.display = '';
+      return;
+    }
+    const u = res.user;
+    state.user = { name: u.name, role: u.role, dealer: u.dealer, login: loginVal };
+    state.filter = { status: '', manager: '' };
+    saveSession(JSON.stringify({ name: u.name, pin: passVal }));
+
+    // Загрузить лиды из GAS
+    btn.disabled = true; btn.textContent = 'Загрузка данных...';
+    const leadsRes = await gas.getLeads(u.role === 'manager' || u.role === 'rop' || u.role === 'director' ? u.dealer : null);
+    btn.disabled = false; btn.textContent = 'Войти';
+    if (leadsRes.ok && leadsRes.leads) state.leads = leadsRes.leads;
+
+    enterApp(u);
+    return;
+  }
+
+  // Фолбэк — локальные тест-аккаунты
+  const u = USERS[loginVal];
+  if (!u || u.pass !== passVal) {
+    errEl.textContent = 'Неверный логин или пароль';
+    errEl.style.display = '';
+    return;
+  }
+  state.user = { ...u, login: loginVal };
   state.filter = { status: '', manager: '' };
-  saveSession(login);
+  saveSession(loginVal);
+  enterApp(u);
+}
+
+function enterApp(u) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
   document.getElementById('role-badge').textContent = ROLE_LABELS[u.role];
@@ -1228,8 +1425,8 @@ const ROLE_TABS = {
   manager:  [{label:'🏠 Главная', view:'managerHome'}, {label:'📋 Мои лиды', view:'managerLeads'}, {label:'📅 Календарь', view:'managerCalendar'}, {label:'📊 Мой скоринг', view:'managerScore'}, {label:'♻️ Архив', view:'managerArchive'}, {label:'📁 Все РЛ', view:'archiveAll'}],
   rop:      [{label:'🏠 Главная', view:'ropHome'}, {label:'👥 Менеджеры', view:'ropManagers'}, {label:'📋 Все лиды', view:'ropLeads'}, {label:'📁 Архив РЛ', view:'archiveAll'}],
   director: [{label:'🏠 ДЦ Обзор', view:'dirHome'}, {label:'👥 Команда', view:'dirTeam'}, {label:'📊 Отчёт', view:'dirReport'}, {label:'📁 Архив РЛ', view:'archiveAll'}, {label:'📂 CSV', view:'csvUpload'}],
-  distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📁 Все РЛ', view:'archiveAll'}, {label:'📂 CSV', view:'csvUpload'}],
-  owner:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📁 Все РЛ', view:'archiveAll'}, {label:'📂 CSV', view:'csvUpload'}],
+  distr:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📁 Все РЛ', view:'archiveAll'}, {label:'👤 Заявки', view:'pendingUsers'}, {label:'📂 CSV', view:'csvUpload'}],
+  owner:    [{label:'🌐 Сеть', view:'networkHome'}, {label:'🏢 Дилеры', view:'networkDealers'}, {label:'📊 Аналитика', view:'networkAnalytics'}, {label:'📁 Все РЛ', view:'archiveAll'}, {label:'👤 Заявки', view:'pendingUsers'}, {label:'📂 CSV', view:'csvUpload'}],
 };
 
 function renderApp() {
@@ -1269,11 +1466,14 @@ function renderApp() {
     ropHome, ropManagers, ropLeads,
     dirHome, dirTeam, dirReport,
     networkHome, networkDealers, networkAnalytics,
+    pendingUsers,
     csvUpload,
   };
   if (builders[view]) el.innerHTML = builders[view]();
   else el.innerHTML = '<div class="card">Раздел в разработке</div>';
   setTimeout(initCharts, 100);
+  // Пост-рендер хуки
+  if (view === 'pendingUsers') setTimeout(loadPendingUsers, 50);
 }
 
 function toggleMobileSidebar() {
@@ -2521,6 +2721,83 @@ function networkAnalytics() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  PENDING USERS (заявки на регистрацию)
+// ═══════════════════════════════════════════════════════════════
+function pendingUsers() {
+  if (!gas.useGAS) {
+    return `<div style="padding:32px;text-align:center;color:var(--text2);">
+      <div style="font-size:40px;margin-bottom:12px;">🔌</div>
+      <div style="font-weight:700;margin-bottom:8px;">Google Sheets не подключён</div>
+      <div style="font-size:13px;">Настройте GAS_URL в конфигурации для управления пользователями</div>
+    </div>`;
+  }
+  return `
+  <div class="section-header"><div class="section-title">👤 Заявки на регистрацию</div></div>
+  <div id="pending-users-list" style="padding:12px;">
+    <div style="text-align:center;color:var(--text2);padding:24px;">Загрузка...</div>
+  </div>`;
+}
+
+async function loadPendingUsers() {
+  const el = document.getElementById('pending-users-list');
+  if (!el) return;
+  const res = await gas.getUsers();
+  if (!res.ok) { el.innerHTML = `<div style="color:#ef5350;padding:16px;">${res.error}</div>`; return; }
+
+  const users = res.users || [];
+  const pending = users.filter(u => u.status === 'pending');
+  const active  = users.filter(u => u.status === 'active');
+
+  let html = '';
+
+  if (pending.length === 0 && active.length === 0) {
+    html = '<div style="text-align:center;color:var(--text2);padding:32px;">Нет пользователей</div>';
+  }
+
+  if (pending.length) {
+    html += `<div style="font-weight:700;font-size:13px;color:#ff9800;margin-bottom:10px;">⏳ Ожидают активации (${pending.length})</div>`;
+    pending.forEach(u => {
+      html += `<div style="background:var(--card);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);">
+        <div style="width:40px;height:40px;border-radius:50%;background:#ff9800;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;">${u.name[0]}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;">${u.name}</div>
+          <div style="font-size:12px;color:var(--text2);">${u.role === 'manager' ? 'Менеджер' : u.role === 'rop' ? 'РОП' : 'Директор ДЦ'} · ${u.dealer}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="approveUser('${u.id}','active')" style="background:#4caf50;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">✓ Одобрить</button>
+          <button onclick="approveUser('${u.id}','blocked')" style="background:#ef5350;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">✕ Отклонить</button>
+        </div>
+      </div>`;
+    });
+  }
+
+  if (active.length) {
+    html += `<div style="font-weight:700;font-size:13px;color:#4caf50;margin:16px 0 10px;">✅ Активные пользователи (${active.length})</div>`;
+    active.forEach(u => {
+      html += `<div style="background:var(--card);border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);">
+        <div style="width:36px;height:36px;border-radius:50%;background:#4caf50;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${u.name[0]}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:13px;">${u.name}</div>
+          <div style="font-size:11px;color:var(--text2);">${u.role === 'manager' ? 'Менеджер' : u.role === 'rop' ? 'РОП' : 'Директор ДЦ'} · ${u.dealer}</div>
+        </div>
+        <button onclick="approveUser('${u.id}','blocked')" style="background:var(--border);color:var(--text2);border:none;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;">Заблокировать</button>
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+async function approveUser(id, status) {
+  const res = await gas.approveUser(id, status);
+  if (res.ok) {
+    await loadPendingUsers();
+  } else {
+    alert('Ошибка: ' + res.error);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  CSV UPLOAD
 // ═══════════════════════════════════════════════════════════════
 function csvUpload() {
@@ -2839,6 +3116,11 @@ setInterval(() => {
 
 // ── Auto-restore session on load
 window.addEventListener('DOMContentLoaded', () => {
+  // Скрыть подсказку с тест-аккаунтами если GAS подключён
+  if (gas.useGAS) {
+    const hint = document.getElementById('login-hint-demo');
+    if (hint) hint.style.display = 'none';
+  }
   restoreSession();
   setTimeout(askNotifPermission, 2000);
   setTimeout(scheduleMeetingReminders, 3000);
