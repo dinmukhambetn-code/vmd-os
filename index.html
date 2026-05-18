@@ -572,6 +572,16 @@ mark{background:#FFF176;border-radius:2px;padding:0 2px;}
         🔔
         <span class="notif-count" id="notif-count">0</span>
       </button>
+      <div id="admin-role-switcher" style="display:none;position:relative;">
+        <button onclick="toggleRoleSwitcher()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
+          👁 <span id="admin-role-label">Роль</span> ▾
+        </button>
+        <div id="role-switcher-menu" style="display:none;position:absolute;right:0;top:36px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:999;min-width:180px;padding:6px;">
+          ${['manager','rop','director','distr','owner'].map(r =>
+            `<div onclick="switchAdminRole('${r}')" style="padding:9px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">${{manager:'👤 Менеджер',rop:'📊 РОП',director:'🏢 Директор ДЦ',distr:'🌐 Дистрибьютор',owner:'👑 Учредитель'}[r]}</div>`
+          ).join('')}
+        </div>
+      </div>
       <div class="avatar" id="user-avatar" onclick="doLogout()">?</div>
     </div>
   </div>
@@ -764,6 +774,9 @@ const gas = {
 // ═══════════════════════════════════════════════════════════════
 
 const USERS = {
+  // ── ADMIN (всегда доступен, без GAS) ──
+  dimash:   { pass:'Orbis2026', name:'Димаш Нурбеков', role:'owner', dealer:'Дистрибьютор', city:'Алматы', isAdmin: true },
+  // ── Тест-аккаунты ──
   manager1: { pass:'1234', name:'Алибек Джаксыбеков', role:'manager', dealer:'Kaiyi Almaty',    city:'Алматы' },
   manager2: { pass:'1234', name:'Гүлнар Əбенова',      role:'manager', dealer:'Kaiyi Astana',    city:'Астана' },
   rop1:     { pass:'1234', name:'Серік Мұратов',        role:'rop',     dealer:'Kaiyi Almaty',    city:'Алматы' },
@@ -831,6 +844,12 @@ let state = {
 // ── PERSISTENCE
 function saveLeads() {
   try { localStorage.setItem('vmd_leads', JSON.stringify(state.leads)); } catch(e){}
+}
+
+// Сохранить один лид в GAS (без ожидания)
+function syncLeadToGAS(lead) {
+  if (!gas.useGAS || !lead) return;
+  gas.saveLead(lead).catch(() => {}); // fire & forget
 }
 function loadLeads() {
   try {
@@ -1203,6 +1222,7 @@ function changeStatus(id, newStatus) {
   lead.status = newStatus;
   lead.lastContact = new Date().toISOString().split('T')[0];
   saveLeads();
+  syncLeadToGAS(lead);
   buildNotifications();
   renderSidebar();
   renderApp();
@@ -1323,10 +1343,41 @@ function enterApp(u) {
   document.getElementById('role-badge').textContent = ROLE_LABELS[u.role];
   document.getElementById('user-avatar').textContent = u.name[0];
   document.getElementById('ai-fab').classList.add('show');
+  // Показать переключатель ролей для админа
+  if (state.user.isAdmin) {
+    const sw = document.getElementById('admin-role-switcher');
+    if (sw) sw.style.display = '';
+    document.getElementById('admin-role-label').textContent = ROLE_LABELS[u.role];
+  }
   buildNotifications();
   renderSidebar();
   renderApp();
 }
+
+function toggleRoleSwitcher() {
+  const menu = document.getElementById('role-switcher-menu');
+  menu.style.display = menu.style.display === 'none' ? '' : 'none';
+}
+
+function switchAdminRole(role) {
+  state.user.role = role;
+  state.currentTab = 0;
+  document.getElementById('role-badge').textContent = ROLE_LABELS[role];
+  document.getElementById('admin-role-label').textContent = ROLE_LABELS[role];
+  document.getElementById('role-switcher-menu').style.display = 'none';
+  buildNotifications();
+  renderSidebar();
+  renderApp();
+}
+
+// Закрыть меню при клике вне
+document.addEventListener('click', e => {
+  const sw = document.getElementById('admin-role-switcher');
+  if (sw && !sw.contains(e.target)) {
+    const menu = document.getElementById('role-switcher-menu');
+    if (menu) menu.style.display = 'none';
+  }
+});
 
 function doLogout() {
   if (!confirm('Выйти из системы?')) return;
@@ -2133,6 +2184,7 @@ function reactivateLead(id) {
   lead.nextAction = 'Звонок';
   lead.nextActionDate = new Date(Date.now() + 24*3600*1000).toISOString().split('T')[0];
   saveLeads();
+  syncLeadToGAS(lead);
   buildNotifications();
   renderApp();
   pushNotif('♻️ Реактивация', `${lead.client} возвращён в работу`, 'success');
@@ -2308,8 +2360,11 @@ function saveMeeting(sendWA) {
   // Update lead nextAction if linked
   if (leadId && leadId !== '__new__') {
     const lead = state.leads.find(l => l.id === leadId);
-    if (lead) { lead.nextAction = type; lead.nextActionDate = date; lead.lastContact = new Date().toISOString().split('T')[0]; }
-    saveLeads();
+    if (lead) {
+      lead.nextAction = type; lead.nextActionDate = date; lead.lastContact = new Date().toISOString().split('T')[0];
+      saveLeads();
+      syncLeadToGAS(lead);
+    }
   }
   try { localStorage.setItem('vmd_meetings', JSON.stringify(state.meetings)); } catch(e){}
 
@@ -2877,9 +2932,15 @@ function parseCSVFile(file) {
       }
       if (leads.length) {
         state.leads = leads;
+        saveLeads();
         buildNotifications();
-        alert(`✅ Загружено ${leads.length} рабочих листов из DNM`);
-        switchTab(0);
+
+        if (gas.useGAS) {
+          syncLeadsToGAS(leads);
+        } else {
+          alert(`✅ Загружено ${leads.length} рабочих листов из DNM`);
+          switchTab(0);
+        }
       } else {
         alert('❌ Не удалось прочитать данные. Проверь формат CSV.');
       }
@@ -2888,6 +2949,49 @@ function parseCSVFile(file) {
     }
   };
   reader.readAsText(file, 'UTF-8');
+}
+
+async function syncLeadsToGAS(leads) {
+  // Показать прогресс
+  const progressId = 'gas-sync-progress';
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="${progressId}" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1a1a2e;color:#fff;padding:14px 24px;border-radius:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:9999;font-size:14px;font-weight:600;
+      display:flex;align-items:center;gap:12px;min-width:280px;">
+      <span style="font-size:20px;">☁️</span>
+      <div>
+        <div>Синхронизация с Google Sheets...</div>
+        <div id="gas-sync-count" style="font-size:12px;color:#90caf9;margin-top:2px;">0 / ${leads.length}</div>
+      </div>
+    </div>
+  `);
+
+  let synced = 0;
+  let errors = 0;
+
+  // Отправляем лиды батчами по 5
+  const batch = 5;
+  for (let i = 0; i < leads.length; i += batch) {
+    const chunk = leads.slice(i, i + batch);
+    await Promise.all(chunk.map(async lead => {
+      const res = await gas.saveLead(lead);
+      if (res.ok) synced++; else errors++;
+      const el = document.getElementById('gas-sync-count');
+      if (el) el.textContent = `${synced} / ${leads.length}`;
+    }));
+  }
+
+  // Убрать прогресс
+  const el = document.getElementById(progressId);
+  if (el) el.remove();
+
+  const msg = errors > 0
+    ? `✅ Синхронизировано: ${synced}\n⚠️ Ошибок: ${errors}`
+    : `✅ ${synced} рабочих листов загружено в Google Sheets!\nМенеджеры увидят свои лиды при следующем входе.`;
+  alert(msg);
+  switchTab(0);
+  renderApp();
 }
 
 // ═══════════════════════════════════════════════════════════════
