@@ -1298,6 +1298,16 @@ async function doLogin() {
   const btn      = document.getElementById('login-btn');
   errEl.style.display = 'none';
 
+  // Сначала всегда проверяем локальных пользователей (admin, тест-аккаунты)
+  const localUser = USERS[loginVal];
+  if (localUser && localUser.pass === passVal) {
+    state.user = { ...localUser, login: loginVal };
+    state.filter = { status: '', manager: '' };
+    saveSession(loginVal);
+    enterApp(localUser);
+    return;
+  }
+
   // Если GAS подключён — авторизация через Google Sheets
   if (gas.useGAS) {
     btn.disabled = true; btn.textContent = 'Вход...';
